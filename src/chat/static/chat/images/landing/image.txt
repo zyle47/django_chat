@@ -1,0 +1,6 @@
+Place your landing page image here as:
+
+image.jpg
+
+Expected path used by template:
+src/chat/static/chat/images/landing/image.jpg

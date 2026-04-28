@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign up</title>
+    <style>
+        :root {
+            --bg: #f5f8ff;
+            --panel: #ffffff;
+            --border: #d4def3;
+            --text: #18233a;
+            --accent: #3168d6;
+            --accent-strong: #21479a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #eef6ff 0%, #edfef6 100%);
+            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            color: var(--text);
+            padding: 24px;
+        }
+        .card {
+            width: min(460px, 100%);
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 14px 30px rgba(24, 35, 58, 0.08);
+        }
+        h1 { margin-top: 0; }
+        form p { margin: 0 0 12px; }
+        input {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 10px;
+            font-size: 1rem;
+        }
+        button {
+            border: none;
+            border-radius: 9px;
+            padding: 10px 14px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        button:hover { background: var(--accent-strong); }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1>Create account</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Sign up</button>
+        </form>
+        <p><a href="/accounts/login/">Already have an account? Login</a></p>
+    </main>
+</body>
+</html>

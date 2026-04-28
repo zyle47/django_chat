@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Room Control</title>
+    <style>
+        :root {
+            --bg: #f3f6fb;
+            --panel: #ffffff;
+            --border: #d3dfec;
+            --text: #16263a;
+            --muted: #62758a;
+            --accent: #1a63d9;
+            --ok: #1d8d53;
+            --warn: #b13a2f;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 8% 7%, #e2ecff 0%, transparent 40%),
+                radial-gradient(circle at 92% 90%, #e6f8ec 0%, transparent 34%),
+                var(--bg);
+            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            color: var(--text);
+            padding: 20px;
+        }
+        .panel {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 16px 30px rgba(22, 38, 58, 0.08);
+        }
+        .top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .top h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .top a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr 220px auto;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        input, select, button {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+        }
+        button {
+            border: none;
+            color: #fff;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        .messages {
+            margin-bottom: 14px;
+        }
+        .flash {
+            border-radius: 10px;
+            padding: 9px 12px;
+            margin-bottom: 8px;
+            font-size: 0.92rem;
+        }
+        .flash.success { background: #ecfff4; border: 1px solid #bfe6cc; color: var(--ok); }
+        .flash.error { background: #fff1ef; border: 1px solid #f2c8c2; color: var(--warn); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        th, td {
+            border-bottom: 1px solid var(--border);
+            padding: 10px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th { color: var(--muted); font-weight: 700; }
+        .status {
+            font-weight: 700;
+        }
+        .status.on { color: var(--ok); }
+        .status.off { color: var(--warn); }
+        .action-btn {
+            padding: 7px 10px;
+            border-radius: 8px;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.86rem;
+        }
+        .action-btn.restore { background: var(--ok); }
+        .action-btn.delete { background: var(--warn); }
+        .muted { color: var(--muted); }
+        @media (max-width: 760px) {
+            .filters { grid-template-columns: 1fr; }
+            table { font-size: 0.88rem; }
+        }
+    </style>
+</head>
+<body>
+    <main class="panel">
+        <div class="top">
+            <h1>Room Control</h1>
+            <a href="/">Back to lobby</a>
+        </div>
+
+        <form class="filters" method="get">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search by room name or id" />
+            <select name="sort">
+                {% for option_value, option_label in sort_options %}
+                    <option value="{{ option_value }}" {% if sort == option_value %}selected{% endif %}>{{ option_label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Apply</button>
+        </form>
+
+        <div class="messages">
+            {% for message in messages %}
+                <div class="flash {{ message.tags|default:'success' }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Room</th>
+                    <th>Created</th>
+                    <th>Deleted At</th>
+                    <th>Deleted</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room_row in rooms %}
+                    <tr>
+                        <td>{{ room_row.id }}</td>
+                        <td>{{ room_row.name }}</td>
+                        <td>{{ room_row.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if room_row.deleted_at %}
+                                {{ room_row.deleted_at|date:"Y-m-d H:i" }}
+                            {% else %}
+                                <span class="muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if room_row.is_deleted %}
+                                <span class="status off">True</span>
+                            {% else %}
+                                <span class="status on">False</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'admin-room-set-deleted' room_row.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="redirect_query" value="{{ query }}" />
+                                <input type="hidden" name="redirect_sort" value="{{ sort }}" />
+                                {% if room_row.is_deleted %}
+                                    <input type="hidden" name="is_deleted" value="0" />
+                                    <button class="action-btn restore" type="submit">Restore</button>
+                                {% else %}
+                                    <input type="hidden" name="is_deleted" value="1" />
+                                    <button class="action-btn delete" type="submit">Soft Delete</button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="muted">No rooms matched your search.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>

@@ -1,0 +1,352 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chat Lobby</title>
+    <style>
+        :root {
+            --bg: #f6f5f0;
+            --panel: #ffffff;
+            --border: #d7d3c8;
+            --text: #1c1b18;
+            --muted: #696457;
+            --accent: #2d5bff;
+            --accent-strong: #1338c2;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background:
+                radial-gradient(circle at 10% 10%, #e4ead5 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, #d7e4ff 0%, transparent 35%),
+                var(--bg);
+            color: var(--text);
+            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            padding: 24px;
+        }
+
+        .card {
+            width: min(680px, 100%);
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 12px 30px rgba(18, 24, 40, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.9rem;
+            letter-spacing: 0.02em;
+        }
+
+        p {
+            margin: 0 0 18px;
+            color: var(--muted);
+        }
+
+        .auth-row {
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+        }
+
+        .auth-row a {
+            color: var(--accent-strong);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-links {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .flash-list {
+            margin: 0 0 14px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .flash {
+            border-radius: 10px;
+            padding: 9px 12px;
+            margin-bottom: 8px;
+            font-size: 0.92rem;
+            border: 1px solid var(--border);
+            background: #f8f9ff;
+        }
+
+        .flash.error {
+            border-color: #f0beb8;
+            background: #fff1ef;
+        }
+
+        .flash.success {
+            border-color: #bde3cb;
+            background: #ecfff4;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 1rem;
+        }
+
+        button {
+            margin-top: 4px;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 1rem;
+            color: #fff;
+            background: var(--accent);
+            cursor: pointer;
+            transition: background 0.18s ease;
+        }
+
+        button:hover { background: var(--accent-strong); }
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            background: #8da0dd;
+        }
+
+        .rooms {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .room-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .room-pill {
+            display: inline-block;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 7px 12px;
+            text-decoration: none;
+            color: var(--text);
+            background: #f8f9ff;
+            cursor: pointer;
+        }
+
+        .welcome {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 18px;
+            align-items: center;
+        }
+
+        .welcome h2 {
+            margin: 0 0 10px;
+            font-size: 2rem;
+            line-height: 1.1;
+        }
+
+        .welcome p {
+            margin: 0 0 16px;
+        }
+
+        .welcome-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .welcome-link {
+            display: inline-block;
+            text-decoration: none;
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .welcome-link.primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .welcome-link.secondary {
+            border: 1px solid var(--border);
+            color: var(--text);
+            background: #f8f9ff;
+        }
+
+        .welcome-media {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            background: #edf1ff;
+            height: 250px;
+        }
+
+        .welcome-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            display: block;
+        }
+
+        @media (max-width: 760px) {
+            .welcome {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        {% if user.is_authenticated %}
+            <h1>Chat Lobby</h1>
+            <p>Enter a room name and password to create or join it.</p>
+
+            {% if messages %}
+                <ul class="flash-list">
+                    {% for message in messages %}
+                        <li class="flash {{ message.tags|default:'' }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="auth-row">
+                <span>Signed in as <strong>{{ user.username }}</strong></span>
+                <div class="auth-links">
+                    {% if user.is_superuser %}
+                        <a href="/control/users/">User approvals</a>
+                        <a href="/control/rooms/">Room control</a>
+                    {% endif %}
+                    <form method="post" action="/accounts/logout/">
+                        {% csrf_token %}
+                        <button type="submit">Logout</button>
+                    </form>
+                </div>
+            </div>
+
+            <form class="grid" method="post" action="/rooms/enter/">
+                {% csrf_token %}
+                <label for="room-name-input">Room name</label>
+                <input id="room-name-input" name="room_name" type="text" maxlength="80" placeholder="general" />
+
+                <label for="room-password-input">Room password</label>
+                <input id="room-password-input" name="room_password" type="password" maxlength="128" placeholder="Required" />
+
+                <button id="room-name-submit" type="submit">
+                    Enter Room
+                </button>
+            </form>
+
+            <section class="rooms">
+                <strong>Existing rooms</strong>
+                <div id="room-list" class="room-list">
+                    {% for room in rooms %}
+                        <button class="room-pill room-pill-btn" data-room-name="{{ room.name }}" type="button">{{ room.name }}</button>
+                    {% empty %}
+                        <span id="empty-room-state" style="color: var(--muted);">No rooms yet.</span>
+                    {% endfor %}
+                </div>
+            </section>
+        {% else %}
+            <section class="welcome">
+                <div>
+                    <h2>Welcome to the Chat Platform</h2>
+                    <p>Private, room-based chat with admin approval and real-time messaging.</p>
+                    <div class="welcome-actions">
+                        <a class="welcome-link primary" href="/accounts/login/">Login</a>
+                        <a class="welcome-link secondary" href="/signup/">Create Account</a>
+                    </div>
+                </div>
+                <div class="welcome-media">
+                    <img src="{% static 'chat/images/landing/image.jpg' %}" alt="Welcome visual" />
+                </div>
+            </section>
+        {% endif %}
+    </main>
+
+    {% if user.is_authenticated %}
+        <script>
+            const roomNameInput = document.querySelector('#room-name-input');
+            const roomPasswordInput = document.querySelector('#room-password-input');
+            const roomList = document.querySelector('#room-list');
+            const emptyRoomState = document.querySelector('#empty-room-state');
+
+            function addRoomToList(roomName) {
+                if (!roomName) {
+                    return;
+                }
+
+                if (roomList.querySelector(`[data-room-name="${roomName}"]`)) {
+                    return;
+                }
+
+                const button = document.createElement('button');
+                button.className = 'room-pill room-pill-btn';
+                button.dataset.roomName = roomName;
+                button.type = 'button';
+                button.textContent = roomName;
+
+                if (emptyRoomState) {
+                    emptyRoomState.remove();
+                }
+
+                roomList.appendChild(button);
+            }
+
+            roomNameInput.focus();
+            roomList.addEventListener('click', (event) => {
+                const btn = event.target.closest('.room-pill-btn');
+                if (!btn) {
+                    return;
+                }
+                roomNameInput.value = btn.dataset.roomName || "";
+                roomPasswordInput.focus();
+            });
+
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const lobbySocket = new WebSocket(`${protocol}://${window.location.host}/ws/lobby/`);
+
+            lobbySocket.onmessage = function(event) {
+                try {
+                    const payload = JSON.parse(event.data);
+                    if (payload.type === 'room_created') {
+                        addRoomToList(payload.room_name);
+                    }
+                } catch {
+                    // Ignore malformed payloads from network/intermediaries.
+                }
+            };
+        </script>
+    {% endif %}
+</body>
+</html>
