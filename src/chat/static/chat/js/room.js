@@ -6,8 +6,43 @@ window.addEventListener('resize', setViewportHeight);
 
 const roomName       = JSON.parse(document.getElementById('room-name-data').textContent);
 const currentUsername = JSON.parse(document.getElementById('current-username-data').textContent) || 'Anonymous';
-const protocol       = location.protocol === 'https:' ? 'wss' : 'ws';
-const chatSocket     = new WebSocket(`${protocol}://${location.host}/ws/chat/${roomName}/`);
+const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+let socket;
+let reconnectDelay = 1000;
+let heartbeatTimer = null;
+let manualClose = false;
+
+function connect() {
+    socket = new WebSocket(`${protocol}://${location.host}/ws/chat/${roomName}/`);
+
+    socket.onopen = () => {
+        reconnectDelay = 1000;
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN)
+                socket.send(JSON.stringify({ type: 'ping' }));
+        }, 25000);
+    };
+
+    socket.onmessage = e => {
+        const data = JSON.parse(e.data);
+        switch (data.type) {
+            case 'message_deleted': handleMsgDeleted(data); break;
+            case 'message_edited':  handleMsgEdited(data);  break;
+            case 'chat_image':      appendImage(data);      break;
+            case 'image_deleted':   handleImgDeleted(data); break;
+            default:                appendMessage(data);    break;
+        }
+    };
+
+    socket.onclose = () => {
+        clearInterval(heartbeatTimer);
+        if (manualClose) return;
+        appendNotice(`Connection lost — reconnecting in ${reconnectDelay / 1000}s…`);
+        setTimeout(() => { connect(); }, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, 15000);
+    };
+}
 
 const chatLog    = document.getElementById('chat-log');
 const msgInput   = document.getElementById('chat-message-input');
@@ -126,7 +161,7 @@ async function doUpload() {
 function sendMessage() {
     const msg = msgInput.value.trim();
     if (!msg) return;
-    chatSocket.send(JSON.stringify({ type: 'message', message: msg }));
+    socket.send(JSON.stringify({ type: 'message', message: msg }));
     msgInput.value = '';
     msgInput.focus();
 }
@@ -200,18 +235,7 @@ function appendImage(data) {
     chatLog.scrollTop = chatLog.scrollHeight;
 }
 
-chatSocket.onmessage = e => {
-    const data = JSON.parse(e.data);
-    switch (data.type) {
-        case 'message_deleted': handleMsgDeleted(data); break;
-        case 'message_edited': handleMsgEdited(data); break;
-        case 'chat_image': appendImage(data); break;
-        case 'image_deleted': handleImgDeleted(data); break;
-        default: appendMessage(data); break;
-    }
-};
-
-chatSocket.onclose = () => appendNotice('Connection closed — refresh to reconnect.');
+connect();
 
 function handleMsgDeleted(data) {
     document.querySelector(`[data-msg-id="${data.message_id}"]`)?.remove();
@@ -245,7 +269,7 @@ document.getElementById('chat-log').addEventListener('click', e => {
     if (e.target.closest('.del-btn')) {
         const msgId = art.dataset.msgId ? +art.dataset.msgId : null;
         const imgId = art.dataset.imgId ? +art.dataset.imgId : null;
-        if (msgId) chatSocket.send(JSON.stringify({ type: 'message.delete', message_id: msgId }));
+        if (msgId) socket.send(JSON.stringify({ type: 'message.delete', message_id: msgId }));
         if (imgId) deleteImg(imgId);
         return;
     }
@@ -278,7 +302,7 @@ function saveEdit(art) {
     const newText = inp?.value.trim();
     const msgId = +art.dataset.msgId;
     if (!newText || !msgId) { exitEdit(art); return; }
-    chatSocket.send(JSON.stringify({ type: 'message.edit', message_id: msgId, message: newText }));
+    socket.send(JSON.stringify({ type: 'message.edit', message_id: msgId, message: newText }));
 }
 
 async function deleteImg(imgId) {

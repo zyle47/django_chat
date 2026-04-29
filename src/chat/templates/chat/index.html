@@ -167,16 +167,20 @@
         .btn-full { width: 100%; }
 
         /* Flash messages */
-        .flashes { padding: 14px 24px 0; }
-        .flash {
+        .flash-notifications { padding: 14px 24px 0; }
+        .flash-notification {
             border-radius: 5px;
             padding: 10px 14px;
             margin-bottom: 8px;
             font-size: 0.87rem;
             border: 1px solid;
         }
-        .flash.error   { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; }
-        .flash.success { background: rgba(0,255,159,0.06); border-color: rgba(0,255,159,0.3); color: var(--green); }
+        .flash-notification.error   { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; animation: error-glow 2s ease-in-out infinite; }
+        @keyframes error-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,59,59,0.25); border-color: rgba(255,59,59,0.3); text-shadow: 0 0 4px rgba(255,59,59,0.4); }
+            50%       { box-shadow: 0 0 18px rgba(255,59,59,0.75), 0 0 35px rgba(255,59,59,0.25); border-color: rgba(255,59,59,0.7); text-shadow: 0 0 12px rgba(255,107,107,0.95), 0 0 24px rgba(255,59,59,0.5); }
+        }
+        .flash-notification.success { background: rgba(0,255,159,0.06); border-color: rgba(0,255,159,0.3); color: var(--green); }
 
         /* Two-column layout */
         .content {
@@ -285,7 +289,7 @@
             grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
             gap: 10px;
             overflow-y: auto;
-            max-height: 380px;
+            max-height: 220px;
             padding: 3px;
         }
         .rooms-grid::-webkit-scrollbar { width: 4px; }
@@ -313,6 +317,19 @@
             box-shadow: 0 0 22px rgba(0,245,255,0.18), 0 4px 16px rgba(0,0,0,0.5);
         }
         .room-card:active { transform: translateY(0); }
+        .room-card.has-msgs {
+            animation: room-pulse 2.2s ease-in-out infinite;
+        }
+        @keyframes room-pulse {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(0,245,255,0.35), 0 0 25px rgba(0,245,255,0.15);
+                border-color: rgba(0,245,255,0.45);
+            }
+            50% {
+                box-shadow: 0 0 35px rgba(0,245,255,1), 0 0 70px rgba(0,245,255,0.6), 0 0 110px rgba(0,245,255,0.25);
+                border-color: var(--cyan);
+            }
+        }
         .room-orb {
             width: 40px;
             height: 40px;
@@ -510,8 +527,7 @@
                 Chat Platform
             </div>
             <div class="topbar-right">
-                <span class="user-badge">&#9632;&nbsp;<strong>{{ user.username }}</strong></span>
-                {% if user.is_superuser %}
+{% if user.is_superuser %}
                     <a class="btn btn-secondary" href="/control/users/">User Approvals</a>
                     <a class="btn btn-secondary" href="/control/rooms/">Room Control</a>
                 {% endif %}
@@ -523,9 +539,9 @@
         </header>
 
         {% if messages %}
-            <div class="flashes">
+            <div class="flash-notifications">
                 {% for message in messages %}
-                    <div class="flash {{ message.tags|default:'' }}">{{ message }}</div>
+                    <div class="flash-notification {{ message.tags|default:'' }}">{{ message }}</div>
                 {% endfor %}
             </div>
         {% endif %}
@@ -534,6 +550,7 @@
 
             <!-- Join / Create -->
             <div class="join-panel">
+                <span class="user-badge" style="margin-bottom:14px; display:inline-flex;">&#9632;&nbsp;<strong>{{ user.username }}</strong></span>
                 <div class="panel-label">// Join or Create</div>
                 <form method="post" action="/rooms/enter/">
                     {% csrf_token %}
@@ -565,7 +582,7 @@
                 </div>
                 <div id="room-list" class="rooms-grid">
                     {% for room in rooms %}
-                        <button class="room-card room-pill-btn" data-room-name="{{ room.name }}" type="button">
+                        <button class="room-card room-pill-btn{% if room.has_unread %} has-msgs{% endif %}" data-room-name="{{ room.name }}" type="button">
                             <div class="room-orb" data-name="{{ room.name }}">{{ room.name|slice:":1"|upper }}</div>
                             <div class="room-card-name">{{ room.name }}</div>
                         </button>
@@ -655,7 +672,6 @@
             document.querySelectorAll('.room-orb[data-name]').forEach(orb => {
                 const c = colorForName(orb.dataset.name);
                 orb.style.background = c;
-                orb.style.boxShadow = `0 0 12px ${c}`;
                 orb.style.color = '#000';
             });
         }
@@ -698,7 +714,7 @@
             btn.className = 'room-card room-pill-btn';
             btn.dataset.roomName = roomName;
             btn.type = 'button';
-            btn.innerHTML = `<div class="room-orb" style="background:${c};box-shadow:0 0 12px ${c};color:#000">${roomName[0].toUpperCase()}</div><div class="room-card-name">${roomName}</div>`;
+            btn.innerHTML = `<div class="room-orb" style="background:${c};color:#000">${roomName[0].toUpperCase()}</div><div class="room-card-name">${roomName}</div>`;
             roomList.appendChild(btn);
             updateCount();
             filterRooms();
@@ -709,6 +725,14 @@
             if (!btn) return;
             roomNameInput.value = btn.dataset.roomName || '';
             roomPassInput.focus();
+        });
+
+        document.querySelectorAll('.flash-notification').forEach(el => {
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.8s ease';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 800);
+            }, 6000);
         });
 
         roomSearch.addEventListener('input', filterRooms);

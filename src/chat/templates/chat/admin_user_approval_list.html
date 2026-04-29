@@ -138,16 +138,79 @@
         }
         .btn-apply:hover { box-shadow: 0 0 28px rgba(0,245,255,0.75); transform: translateY(-1px); }
 
-        .flashes { padding: 14px 26px 0; }
-        .flash {
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 26px;
+            position: relative;
+        }
+        .tab-bar::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,245,255,0.25), transparent);
+            pointer-events: none;
+        }
+        .tab {
+            padding: 13px 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.15s;
+        }
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -1px; left: 0; right: 0;
+            height: 2px;
+            background: var(--cyan);
+            box-shadow: 0 0 8px var(--cyan);
+            transform: scaleX(0);
+            transition: transform 0.2s;
+        }
+        .tab.active { color: var(--cyan); text-shadow: 0 0 8px rgba(0,245,255,0.35); }
+        .tab.active::after { transform: scaleX(1); }
+        .tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 17px;
+            padding: 0 5px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            background: rgba(0,245,255,0.08);
+            border: 1px solid rgba(0,245,255,0.2);
+            margin-left: 7px;
+            color: inherit;
+        }
+
+        .flash-notifications { padding: 14px 26px 0; }
+        .flash-notification {
             border-radius: 5px;
             padding: 10px 14px;
             margin-bottom: 8px;
             font-size: 0.87rem;
             border: 1px solid;
         }
-        .flash.success { background: rgba(0,255,159,0.06); border-color: rgba(0,255,159,0.3); color: var(--green); }
-        .flash.error   { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; }
+        .flash-notification.success { background: rgba(0,255,159,0.06); border-color: rgba(0,255,159,0.3); color: var(--green); animation: success-glow 2s ease-in-out infinite; }
+        .flash-notification.error   { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; animation: error-glow 2s ease-in-out infinite; }
+        @keyframes success-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(0,255,159,0.25); border-color: rgba(0,255,159,0.3); text-shadow: 0 0 4px rgba(0,255,159,0.4); }
+            50%       { box-shadow: 0 0 18px rgba(0,255,159,0.75), 0 0 35px rgba(0,255,159,0.25); border-color: rgba(0,255,159,0.7); text-shadow: 0 0 12px rgba(0,255,159,0.95), 0 0 24px rgba(0,255,159,0.5); }
+        }
+        @keyframes error-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,59,59,0.25); border-color: rgba(255,59,59,0.3); text-shadow: 0 0 4px rgba(255,59,59,0.4); }
+            50%       { box-shadow: 0 0 18px rgba(255,59,59,0.75), 0 0 35px rgba(255,59,59,0.25); border-color: rgba(255,59,59,0.7); text-shadow: 0 0 12px rgba(255,107,107,0.95), 0 0 24px rgba(255,59,59,0.5); }
+        }
 
         .table-wrap { padding: 0 26px 26px; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 18px; }
@@ -183,18 +246,9 @@
             padding: 4px 10px;
         }
         .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
-        .badge-green {
-            background: rgba(0,255,159,0.07);
-            color: var(--green);
-            border: 1px solid rgba(0,255,159,0.28);
-            box-shadow: 0 0 8px rgba(0,255,159,0.12);
-        }
+        .badge-green { background: rgba(0,255,159,0.07); color: var(--green); border: 1px solid rgba(0,255,159,0.28); box-shadow: 0 0 8px rgba(0,255,159,0.12); }
         .badge-green::before { background: var(--green); box-shadow: 0 0 4px var(--green); }
-        .badge-red {
-            background: rgba(255,59,59,0.07);
-            color: var(--red);
-            border: 1px solid rgba(255,59,59,0.28);
-        }
+        .badge-red { background: rgba(255,59,59,0.07); color: var(--red); border: 1px solid rgba(255,59,59,0.28); }
         .badge-red::before { background: var(--red); }
 
         .act-btn {
@@ -211,22 +265,55 @@
             text-transform: uppercase;
             transition: all 0.15s;
         }
-        .act-btn.approve {
-            color: var(--green);
-            border-color: rgba(0,255,159,0.35);
-            background: rgba(0,255,159,0.06);
-        }
+        .act-btn.approve { color: var(--green); border-color: rgba(0,255,159,0.35); background: rgba(0,255,159,0.06); }
         .act-btn.approve:hover { background: rgba(0,255,159,0.12); box-shadow: 0 0 14px rgba(0,255,159,0.25); border-color: var(--green); transform: translateY(-1px); }
-        .act-btn.disable {
-            color: var(--red);
-            border-color: rgba(255,59,59,0.35);
-            background: rgba(255,59,59,0.06);
+        .act-btn.ban { color: var(--red); border-color: rgba(255,59,59,0.35); background: rgba(255,59,59,0.06); }
+        .act-btn.ban:hover { background: rgba(255,59,59,0.12); box-shadow: 0 0 12px rgba(255,59,59,0.22); border-color: var(--red); transform: translateY(-1px); }
+        .act-btn.permadelete { color: #ff00de; border-color: rgba(255,0,222,0.35); background: rgba(255,0,222,0.06); }
+        .act-btn.permadelete:hover { background: rgba(255,0,222,0.12); box-shadow: 0 0 14px rgba(255,0,222,0.35); border-color: #ff00de; transform: translateY(-1px); }
+        .action-group { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+
+        .empty-row td { color: var(--muted); padding: 30px 12px; }
+
+        /* Delete modal */
+        .modal-backdrop {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            place-items: center;
         }
-        .act-btn.disable:hover { background: rgba(255,59,59,0.12); box-shadow: 0 0 12px rgba(255,59,59,0.22); border-color: var(--red); transform: translateY(-1px); }
+        .modal-backdrop.open { display: grid; }
+        .modal {
+            background: var(--panel);
+            border: 1px solid rgba(255,0,222,0.35);
+            border-radius: 10px;
+            box-shadow: 0 0 60px rgba(255,0,222,0.2);
+            padding: 32px 36px;
+            width: min(400px, 90vw);
+            position: relative;
+        }
+        .modal::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 12%; right: 12%; height: 1px;
+            background: linear-gradient(90deg, transparent, #ff00de, transparent);
+            box-shadow: 0 0 12px #ff00de;
+        }
+        .modal-title {
+            font-size: 1rem; font-weight: 800;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            color: #ff00de; margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255,0,222,0.5);
+        }
+        .modal-body { font-size: 0.9rem; color: var(--text); line-height: 1.6; margin-bottom: 24px; }
+        .modal-body strong { color: #fff; }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 
         @media (max-width: 760px) {
             .filters-bar { grid-template-columns: 1fr; }
-            .topbar, .filters-bar, .table-wrap { padding-left: 16px; padding-right: 16px; }
+            .topbar, .filters-bar, .tab-bar, .table-wrap { padding-left: 16px; padding-right: 16px; }
         }
     </style>
 </head>
@@ -247,10 +334,15 @@
             <button class="btn-apply" type="submit">Apply</button>
         </form>
 
+        <div class="tab-bar">
+            <button class="tab active" data-tab="registered">Registered <span class="tab-count" id="count-registered">0</span></button>
+            <button class="tab" data-tab="pending">Pending <span class="tab-count" id="count-pending">0</span></button>
+        </div>
+
         {% if messages %}
-            <div class="flashes">
+            <div class="flash-notifications">
                 {% for message in messages %}
-                    <div class="flash {{ message.tags|default:'success' }}">{{ message }}</div>
+                    <div class="flash-notification {{ message.tags|default:'success' }}">{{ message }}</div>
                 {% endfor %}
             </div>
         {% endif %}
@@ -262,46 +354,108 @@
                         <th>ID</th>
                         <th>Username</th>
                         <th>Joined</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th style="text-align:center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for user_row in users %}
                         {% if not user_row.is_superuser %}
-                            <tr>
+                            <tr data-status="{% if user_row.is_active %}registered{% else %}pending{% endif %}">
                                 <td class="muted">#{{ user_row.id }}</td>
                                 <td><strong>{{ user_row.username }}</strong></td>
                                 <td class="muted">{{ user_row.date_joined|date:"Y-m-d H:i" }}</td>
-                                <td>
-                                    {% if user_row.is_active %}
-                                        <span class="badge badge-green">Active</span>
-                                    {% else %}
-                                        <span class="badge badge-red">Inactive</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <form method="post" action="{% url 'admin-user-set-active' user_row.id %}">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="redirect_query" value="{{ query }}" />
-                                        <input type="hidden" name="redirect_sort" value="{{ sort }}" />
-                                        {% if user_row.is_active %}
-                                            <input type="hidden" name="is_active" value="0" />
-                                            <button class="act-btn disable" type="submit">Disable</button>
-                                        {% else %}
-                                            <input type="hidden" name="is_active" value="1" />
-                                            <button class="act-btn approve" type="submit">Approve</button>
-                                        {% endif %}
-                                    </form>
+                                <td style="text-align:center">
+                                    <div class="action-group">
+                                        <form method="post" action="{% url 'admin-user-set-active' user_row.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="redirect_query" value="{{ query }}" />
+                                            <input type="hidden" name="redirect_sort" value="{{ sort }}" />
+                                            {% if user_row.is_active %}
+                                                <input type="hidden" name="is_active" value="0" />
+                                                <button class="act-btn ban" type="submit">Ban</button>
+                                            {% else %}
+                                                <input type="hidden" name="is_active" value="1" />
+                                                <button class="act-btn approve" type="submit">Approve</button>
+                                            {% endif %}
+                                        </form>
+                                        <form method="post" action="{% url 'admin-user-delete' user_row.id %}" class="delete-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="redirect_query" value="{{ query }}" />
+                                            <input type="hidden" name="redirect_sort" value="{{ sort }}" />
+                                            <button class="act-btn permadelete" type="button" data-username="{{ user_row.username }}" onclick="confirmDelete(this)">Delete</button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         {% endif %}
-                    {% empty %}
-                        <tr><td colspan="5" class="muted" style="padding:30px 12px;">No users matched your search.</td></tr>
                     {% endfor %}
+                    <tr class="empty-row" id="empty-pending" hidden><td colspan="4">No pending users.</td></tr>
+                    <tr class="empty-row" id="empty-registered" hidden><td colspan="4">No registered users.</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <div class="modal-backdrop" id="delete-modal">
+        <div class="modal">
+            <div class="modal-title">Permanent Delete</div>
+            <div class="modal-body">Permanently delete <strong id="modal-username"></strong>? This cannot be undone.</div>
+            <div class="modal-actions">
+                <button class="act-btn" style="color:var(--muted);border-color:rgba(255,255,255,0.15);" onclick="closeModal()">Cancel</button>
+                <button class="act-btn permadelete" id="modal-confirm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingForm = null;
+
+        function confirmDelete(btn) {
+            pendingForm = btn.closest('form');
+            document.getElementById('modal-username').textContent = btn.dataset.username;
+            document.getElementById('delete-modal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('delete-modal').classList.remove('open');
+            pendingForm = null;
+        }
+
+        document.getElementById('modal-confirm').addEventListener('click', () => {
+            if (pendingForm) pendingForm.submit();
+        });
+
+        document.getElementById('delete-modal').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        const tabs   = document.querySelectorAll('.tab');
+        const rows   = document.querySelectorAll('tbody tr[data-status]');
+        const counts = { pending: 0, registered: 0 };
+
+        rows.forEach(r => { counts[r.dataset.status] = (counts[r.dataset.status] || 0) + 1; });
+        document.getElementById('count-pending').textContent    = counts.pending    || 0;
+        document.getElementById('count-registered').textContent = counts.registered || 0;
+
+        function switchTab(target) {
+            tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === target));
+            rows.forEach(r => { r.hidden = r.dataset.status !== target; });
+            document.getElementById('empty-pending').hidden    = target !== 'pending'    || counts.pending    > 0;
+            document.getElementById('empty-registered').hidden = target !== 'registered' || counts.registered > 0;
+        }
+
+        tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+        // Default tab: registered
+        switchTab('registered');
+
+        document.querySelectorAll('.flash-notification').forEach(el => {
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.8s ease';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 800);
+            }, 6000);
+        });
+</script>
 </body>
 </html>

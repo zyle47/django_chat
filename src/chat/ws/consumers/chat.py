@@ -25,9 +25,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.user_id = user.id
 
         session = self.scope.get("session")
-        if session is None or not has_room_access(session, self.room_name):
-            await self.close(code=4403)
-            return
+        if not user.is_superuser:
+            if session is None or not has_room_access(session, self.room_name):
+                await self.close(code=4403)
+                return
 
         if not await self._room_is_available():
             await self.close(code=4404)

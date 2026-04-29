@@ -53,6 +53,25 @@ def room_control_list(request):
 
 @require_POST
 @superadmin_required
+def delete_room(request, room_id):
+    target_room = get_object_or_404(ChatRoom, id=room_id)
+
+    if not target_room.is_deleted:
+        messages.error(request, "Only deactivated rooms can be permanently deleted.")
+        return HttpResponseRedirect(reverse("admin-room-control-list"))
+
+    name = target_room.name
+    target_room.delete()
+    messages.success(request, f"Room '{name}' has been permanently deleted.")
+
+    redirect_query = request.POST.get("redirect_query", "")
+    redirect_sort = request.POST.get("redirect_sort", "-created_at")
+    query_string = urlencode({"q": redirect_query, "sort": redirect_sort})
+    return HttpResponseRedirect(f"{reverse('admin-room-control-list')}?{query_string}")
+
+
+@require_POST
+@superadmin_required
 def set_room_deleted_status(request, room_id):
     target_room = get_object_or_404(ChatRoom, id=room_id)
     is_deleted_raw = request.POST.get("is_deleted", "")

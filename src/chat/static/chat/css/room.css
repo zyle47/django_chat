@@ -116,7 +116,16 @@ body {
     font-size: 1rem; font-weight: 700;
     letter-spacing: 0.06em; text-transform: uppercase; color: #fff;
 }
-.room-meta .you { font-size: 0.77rem; color: var(--muted); letter-spacing: 0.04em; }
+.room-meta .you { margin-top: 5px; }
+.room-meta .you .user-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 0.8rem; color: var(--cyan);
+    padding: 4px 10px;
+    background: rgba(0,245,255,0.05);
+    border: 1px solid rgba(0,245,255,0.22);
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+}
 .btn-back {
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;

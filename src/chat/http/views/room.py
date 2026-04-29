@@ -15,8 +15,8 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
-from chat.models import ChatImage, ChatMessage, ChatRoom
-from chat.services.room_access import has_room_access
+from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
+from chat.services.room_access import grant_room_access, has_room_access
 from chat.services.room_colors import room_color_for_username
 
 
@@ -46,11 +46,19 @@ def room(request, room_name):
         messages.error(request, "Room does not exist or is unavailable.")
         return redirect("index")
 
-    if not has_room_access(request.session, room_obj.name):
+    if request.user.is_superuser:
+        grant_room_access(request.session, room_obj.name)
+    elif not has_room_access(request.session, room_obj.name):
         messages.error(request, "Enter room password from the lobby to access this room.")
         return redirect("index")
 
     now = timezone.now()
+
+    UserRoomRead.objects.update_or_create(
+        user=request.user,
+        room=room_obj,
+        defaults={"last_read_at": now},
+    )
 
     recent_messages = list(
         room_obj.messages.filter(is_deleted=False)

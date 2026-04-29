@@ -2,6 +2,8 @@ from django.urls import path
 
 from chat.http.views import (
     delete_image,
+    delete_room,
+    delete_user,
     enter_room,
     index,
     room,
@@ -26,6 +28,8 @@ urlpatterns = [
     path("chat/image/<int:image_id>/delete/", delete_image, name="delete-image"),
     path("control/users/", user_approval_list, name="admin-user-approval-list"),
     path("control/users/<int:user_id>/active/", set_user_active_status, name="admin-user-set-active"),
+    path("control/users/<int:user_id>/delete/", delete_user, name="admin-user-delete"),
     path("control/rooms/", room_control_list, name="admin-room-control-list"),
     path("control/rooms/<int:room_id>/deleted/", set_room_deleted_status, name="admin-room-set-deleted"),
+    path("control/rooms/<int:room_id>/delete/", delete_room, name="admin-room-delete"),
 ]

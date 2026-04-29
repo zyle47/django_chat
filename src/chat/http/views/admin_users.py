@@ -65,6 +65,29 @@ def user_approval_list(request):
 
 @require_POST
 @superadmin_required
+def delete_user(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+
+    if target_user.is_superuser:
+        messages.error(request, "Cannot delete a superadmin account.")
+        return HttpResponseRedirect(reverse("admin-user-approval-list"))
+
+    if target_user == request.user:
+        messages.error(request, "You cannot delete your own account.")
+        return HttpResponseRedirect(reverse("admin-user-approval-list"))
+
+    username = target_user.username
+    target_user.delete()
+    messages.success(request, f"User '{username}' has been permanently deleted.")
+
+    redirect_query = request.POST.get("redirect_query", "")
+    redirect_sort = request.POST.get("redirect_sort", "-date_joined")
+    query_string = urlencode({"q": redirect_query, "sort": redirect_sort})
+    return HttpResponseRedirect(f"{reverse('admin-user-approval-list')}?{query_string}")
+
+
+@require_POST
+@superadmin_required
 def set_user_active_status(request, user_id):
     target_user = get_object_or_404(User, id=user_id)
     is_active_raw = request.POST.get("is_active", "")

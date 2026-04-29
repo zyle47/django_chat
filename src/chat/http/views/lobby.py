@@ -2,7 +2,8 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Sum
+from django.db.models import Count, DateTimeField, Q, Sum
+from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import TruncHour
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -10,17 +11,38 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
-from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats
+from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats, UserRoomRead
 from chat.services.rate_limit import is_rate_limited
 from chat.services.room_access import grant_room_access
 
 
 @login_required
 def index(request):
-    rooms = ChatRoom.objects.filter(is_deleted=False)
-
     now = timezone.now()
     last_24h = now - timedelta(hours=24)
+
+    latest_msg_subq = (
+        ChatMessage.objects
+        .filter(room=OuterRef('pk'), is_deleted=False, expires_at__gt=now)
+        .order_by('-created_at')
+        .values('created_at')[:1]
+    )
+    user_read_subq = (
+        UserRoomRead.objects
+        .filter(user=request.user, room=OuterRef('pk'))
+        .values('last_read_at')[:1]
+    )
+    rooms = list(
+        ChatRoom.objects.filter(is_deleted=False).annotate(
+            latest_msg_at=Subquery(latest_msg_subq, output_field=DateTimeField()),
+            user_last_read_at=Subquery(user_read_subq, output_field=DateTimeField()),
+        )
+    )
+    for room in rooms:
+        room.has_unread = (
+            room.latest_msg_at is not None
+            and (room.user_last_read_at is None or room.latest_msg_at > room.user_last_read_at)
+        )
 
     hourly_qs = (
         ChatMessage.objects
@@ -42,8 +64,8 @@ def index(request):
     stats = {
         'messages_24h': msgs_24h,
         'messages_total': historical + msgs_24h,
-        'live_images': ChatImage.objects.filter(expires_at__gt=now).count(),
-        'rooms': rooms.count(),
+        'live_images': ChatImage.objects.filter(expires_at__gt=now, room__is_deleted=False).count(),
+        'rooms': len(rooms),
         'hourly': slots,
     }
 
@@ -63,12 +85,13 @@ def enter_room(request):
 
     room_obj = ChatRoom.objects.filter(name=room_name).first()
     if room_obj is None:
-        if not room_password:
+        if not request.user.is_superuser and not room_password:
             messages.error(request, "New rooms must have a password.")
             return redirect("index")
 
         room_obj = ChatRoom(name=room_name)
-        room_obj.set_password(room_password)
+        if room_password:
+            room_obj.set_password(room_password)
         room_obj.save()
         grant_room_access(request.session, room_obj.name)
         return redirect(reverse("room", kwargs={"room_name": room_obj.name}))
@@ -76,6 +99,10 @@ def enter_room(request):
     if room_obj.is_deleted:
         messages.error(request, "This room is currently unavailable.")
         return redirect("index")
+
+    if request.user.is_superuser:
+        grant_room_access(request.session, room_obj.name)
+        return redirect(reverse("room", kwargs={"room_name": room_obj.name}))
 
     rl_key = f'rl:room:{request.session.session_key}:{room_name}'
     if is_rate_limited(rl_key, 10, 300):

@@ -13,7 +13,7 @@ def _image_upload_path(instance, filename):
 
 class ChatImage(models.Model):
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name="images")
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name="chat_images")
+    user = models.ForeignKey(get_user_model(), null=True, on_delete=models.SET_NULL, related_name="chat_images")
     username = models.CharField(max_length=40)
     color = models.CharField(max_length=20)
     image = models.FileField(upload_to=_image_upload_path)

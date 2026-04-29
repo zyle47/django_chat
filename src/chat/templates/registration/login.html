@@ -161,8 +161,12 @@
         }
         .footer-link a { color: var(--cyan); font-weight: 700; text-decoration: none; }
         .footer-link a:hover { text-shadow: 0 0 8px var(--cyan); }
-        .flash { border-radius: 5px; padding: 10px 14px; font-size: 0.85rem; border: 1px solid; }
-        .flash.error { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; }
+        .flash-notification { border-radius: 5px; padding: 10px 14px; font-size: 0.85rem; border: 1px solid; }
+        .flash-notification.error { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; animation: error-glow 2s ease-in-out infinite; }
+        @keyframes error-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255,59,59,0.25); border-color: rgba(255,59,59,0.3); text-shadow: 0 0 4px rgba(255,59,59,0.4); }
+            50%       { box-shadow: 0 0 18px rgba(255,59,59,0.75), 0 0 35px rgba(255,59,59,0.25); border-color: rgba(255,59,59,0.7); text-shadow: 0 0 12px rgba(255,107,107,0.95), 0 0 24px rgba(255,59,59,0.5); }
+        }
     </style>
 </head>
 <body>
@@ -178,7 +182,7 @@
         {% if messages %}
         <div style="padding: 14px 30px 0;">
             {% for message in messages %}
-            <div class="flash {{ message.tags }}">{{ message }}</div>
+            <div class="flash-notification {{ message.tags }}">{{ message }}</div>
             {% endfor %}
         </div>
         {% endif %}
@@ -191,5 +195,14 @@
             <p class="footer-link">No account? <a href="/signup/">Sign up for free</a></p>
         </div>
     </div>
+    <script>
+        document.querySelectorAll('.flash-notification').forEach(el => {
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.8s ease';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 800);
+            }, 6000);
+        });
+    </script>
 </body>
 </html>
