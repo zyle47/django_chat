@@ -1,0 +1,22 @@
+# Environment & secrets
+.env
+.secret_key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Django
+src/db.sqlite3
+src/db.sqlite3-shm
+src/db.sqlite3-wal
+src/media/
+src/staticfiles/
+
+# Virtual environment
+.venv/
+venv/
+env/

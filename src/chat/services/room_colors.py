@@ -1,16 +1,16 @@
 import hashlib
 
 ROOM_USER_COLORS = [
-    "#ffe3e3",
-    "#ffdfe8",
-    "#ffe9cc",
-    "#fff4c2",
-    "#e5ffd9",
-    "#d9fff4",
-    "#dff2ff",
-    "#e6e4ff",
-    "#f1e4ff",
-    "#ffdff7",
+    "#e07878",  # muted red
+    "#d4936a",  # muted orange
+    "#c8b45a",  # muted yellow
+    "#78c07a",  # muted green
+    "#5abca8",  # muted teal
+    "#60aac8",  # muted sky blue
+    "#7890d4",  # muted blue
+    "#9870c8",  # muted purple
+    "#c06ab0",  # muted magenta
+    "#d07090",  # muted rose
 ]
 
 

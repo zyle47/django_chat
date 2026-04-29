@@ -3,190 +3,305 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>User Approval</title>
+    <title>User Approvals</title>
     <style>
         :root {
-            --bg: #f3f6fb;
-            --panel: #ffffff;
-            --border: #d3dfec;
-            --text: #16263a;
-            --muted: #62758a;
-            --accent: #1a63d9;
-            --ok: #1d8d53;
-            --warn: #b13a2f;
+            --bg: #060610;
+            --panel: #0b0b1e;
+            --surface: #07071a;
+            --border: rgba(0,245,255,0.15);
+            --text: #cce8ff;
+            --muted: #3d6b7a;
+            --cyan: #00f5ff;
+            --pink: #ff00de;
+            --green: #00ff9f;
+            --red: #ff3b3b;
         }
-        * { box-sizing: border-box; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0;
             min-height: 100vh;
-            background:
-                radial-gradient(circle at 8% 7%, #e2ecff 0%, transparent 40%),
-                radial-gradient(circle at 92% 90%, #e6f8ec 0%, transparent 34%),
-                var(--bg);
-            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            background: var(--bg);
+            background-image:
+                linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            font-family: "Segoe UI", system-ui, sans-serif;
             color: var(--text);
-            padding: 20px;
+            padding: 28px 16px;
         }
-        .panel {
-            width: min(1120px, 100%);
+
+        .app {
+            width: min(1100px, 100%);
             margin: 0 auto;
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 16px 30px rgba(22, 38, 58, 0.08);
+            border-radius: 10px;
+            box-shadow: 0 0 60px rgba(0,245,255,0.07);
+            overflow: hidden;
+            position: relative;
         }
-        .top {
+        .app::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 12%; right: 12%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), transparent);
+            box-shadow: 0 0 14px var(--cyan);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .topbar {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .top h1 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-        .top a {
-            color: var(--accent);
-            text-decoration: none;
-            font-weight: 700;
-        }
-        .filters {
-            display: grid;
-            grid-template-columns: 1fr 220px auto;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-        input, select, button {
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 0.95rem;
-        }
-        button {
-            border: none;
-            color: #fff;
-            background: var(--accent);
-            cursor: pointer;
-        }
-        .messages {
-            margin-bottom: 14px;
-        }
-        .flash {
-            border-radius: 10px;
-            padding: 9px 12px;
-            margin-bottom: 8px;
-            font-size: 0.92rem;
-        }
-        .flash.success { background: #ecfff4; border: 1px solid #bfe6cc; color: var(--ok); }
-        .flash.error { background: #fff1ef; border: 1px solid #f2c8c2; color: var(--warn); }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-        }
-        th, td {
+            justify-content: space-between;
+            gap: 14px;
+            padding: 16px 26px;
             border-bottom: 1px solid var(--border);
-            padding: 10px 8px;
+            background: var(--surface);
+            flex-wrap: wrap;
+            position: relative;
+        }
+        .topbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent);
+            pointer-events: none;
+        }
+        .topbar h1 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            text-shadow: 0 0 12px rgba(0,245,255,0.5);
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--cyan);
+            text-decoration: none;
+            border: 1px solid rgba(0,245,255,0.3);
+            border-radius: 5px;
+            padding: 8px 15px;
+            background: transparent;
+            transition: all 0.15s;
+        }
+        .btn-back:hover { background: rgba(0,245,255,0.07); box-shadow: 0 0 14px rgba(0,245,255,0.22); border-color: var(--cyan); }
+
+        .filters-bar {
+            padding: 16px 26px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            display: grid;
+            grid-template-columns: 1fr 200px auto;
+            gap: 10px;
+        }
+        input[type="text"], select {
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 10px 13px;
+            font-size: 0.9rem;
+            outline: none;
+            background: var(--panel);
+            color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        input[type="text"]::placeholder { color: var(--muted); }
+        input[type="text"]:focus, select:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 0 1px rgba(0,245,255,0.2), 0 0 12px rgba(0,245,255,0.1);
+        }
+        select option { background: var(--panel); }
+        .btn-apply {
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: #000;
+            background: var(--cyan);
+            cursor: pointer;
+            box-shadow: 0 0 16px rgba(0,245,255,0.45);
+            transition: box-shadow 0.15s, transform 0.15s;
+        }
+        .btn-apply:hover { box-shadow: 0 0 28px rgba(0,245,255,0.75); transform: translateY(-1px); }
+
+        .flashes { padding: 14px 26px 0; }
+        .flash {
+            border-radius: 5px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 0.87rem;
+            border: 1px solid;
+        }
+        .flash.success { background: rgba(0,255,159,0.06); border-color: rgba(0,255,159,0.3); color: var(--green); }
+        .flash.error   { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; }
+
+        .table-wrap { padding: 0 26px 26px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 18px; }
+        th {
+            padding: 10px 12px;
             text-align: left;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--cyan);
+            opacity: 0.65;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 13px 12px;
+            border-bottom: 1px solid var(--border);
             vertical-align: middle;
         }
-        th { color: var(--muted); font-weight: 700; }
-        .status {
-            font-weight: 700;
-        }
-        .status.on { color: var(--ok); }
-        .status.off { color: var(--warn); }
-        .action-btn {
-            padding: 7px 10px;
-            border-radius: 8px;
-            border: none;
-            color: #fff;
-            cursor: pointer;
-            font-size: 0.86rem;
-        }
-        .action-btn.approve { background: var(--ok); }
-        .action-btn.disable { background: var(--warn); }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: rgba(0,245,255,0.03); }
         .muted { color: var(--muted); }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            border-radius: 3px;
+            padding: 4px 10px;
+        }
+        .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+        .badge-green {
+            background: rgba(0,255,159,0.07);
+            color: var(--green);
+            border: 1px solid rgba(0,255,159,0.28);
+            box-shadow: 0 0 8px rgba(0,255,159,0.12);
+        }
+        .badge-green::before { background: var(--green); box-shadow: 0 0 4px var(--green); }
+        .badge-red {
+            background: rgba(255,59,59,0.07);
+            color: var(--red);
+            border: 1px solid rgba(255,59,59,0.28);
+        }
+        .badge-red::before { background: var(--red); }
+
+        .act-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 16px;
+            border-radius: 5px;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            transition: all 0.15s;
+        }
+        .act-btn.approve {
+            color: var(--green);
+            border-color: rgba(0,255,159,0.35);
+            background: rgba(0,255,159,0.06);
+        }
+        .act-btn.approve:hover { background: rgba(0,255,159,0.12); box-shadow: 0 0 14px rgba(0,255,159,0.25); border-color: var(--green); transform: translateY(-1px); }
+        .act-btn.disable {
+            color: var(--red);
+            border-color: rgba(255,59,59,0.35);
+            background: rgba(255,59,59,0.06);
+        }
+        .act-btn.disable:hover { background: rgba(255,59,59,0.12); box-shadow: 0 0 12px rgba(255,59,59,0.22); border-color: var(--red); transform: translateY(-1px); }
+
         @media (max-width: 760px) {
-            .filters { grid-template-columns: 1fr; }
-            table { font-size: 0.88rem; }
+            .filters-bar { grid-template-columns: 1fr; }
+            .topbar, .filters-bar, .table-wrap { padding-left: 16px; padding-right: 16px; }
         }
     </style>
 </head>
 <body>
-    <main class="panel">
-        <div class="top">
+    <div class="app">
+        <div class="topbar">
             <h1>User Approvals</h1>
-            <a href="/">Back to lobby</a>
+            <a class="btn-back" href="/">&larr; Back to Lobby</a>
         </div>
 
-        <form class="filters" method="get">
-            <input type="text" name="q" value="{{ query }}" placeholder="Search by username or id" />
+        <form class="filters-bar" method="get">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search by username or ID&hellip;" />
             <select name="sort">
                 {% for option_value, option_label in sort_options %}
                     <option value="{{ option_value }}" {% if sort == option_value %}selected{% endif %}>{{ option_label }}</option>
                 {% endfor %}
             </select>
-            <button type="submit">Apply</button>
+            <button class="btn-apply" type="submit">Apply</button>
         </form>
 
-        <div class="messages">
-            {% for message in messages %}
-                <div class="flash {{ message.tags|default:'success' }}">{{ message }}</div>
-            {% endfor %}
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Superadmin</th>
-                    <th>Joined</th>
-                    <th>Active</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user_row in users %}
-                    {% if not user_row.is_superuser %}
-                        <tr>
-                            <td>{{ user_row.id }}</td>
-                            <td>{{ user_row.username }}</td>
-                            <td>{% if user_row.is_superuser %}Yes{% else %}<span class="muted">No</span>{% endif %}</td>
-                            <td>{{ user_row.date_joined|date:"Y-m-d H:i" }}</td>
-                            <td>
-                                {% if user_row.is_active %}
-                                    <span class="status on">True</span>
-                                {% else %}
-                                    <span class="status off">False</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <form method="post" action="{% url 'admin-user-set-active' user_row.id %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="redirect_query" value="{{ query }}" />
-                                    <input type="hidden" name="redirect_sort" value="{{ sort }}" />
-                                    {% if user_row.is_active %}
-                                        <input type="hidden" name="is_active" value="0" />
-                                        <button class="action-btn disable" type="submit">Disable</button>
-                                    {% else %}
-                                        <input type="hidden" name="is_active" value="1" />
-                                        <button class="action-btn approve" type="submit">Approve</button>
-                                    {% endif %}
-                                </form>
-                            </td>
-                        </tr>
-                    {% endif %}
-                {% empty %}
-                    <tr>
-                        <td colspan="6" class="muted">No users matched your search.</td>
-                    </tr>
+        {% if messages %}
+            <div class="flashes">
+                {% for message in messages %}
+                    <div class="flash {{ message.tags|default:'success' }}">{{ message }}</div>
                 {% endfor %}
-            </tbody>
-        </table>
-    </main>
+            </div>
+        {% endif %}
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Joined</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user_row in users %}
+                        {% if not user_row.is_superuser %}
+                            <tr>
+                                <td class="muted">#{{ user_row.id }}</td>
+                                <td><strong>{{ user_row.username }}</strong></td>
+                                <td class="muted">{{ user_row.date_joined|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    {% if user_row.is_active %}
+                                        <span class="badge badge-green">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-red">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form method="post" action="{% url 'admin-user-set-active' user_row.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="redirect_query" value="{{ query }}" />
+                                        <input type="hidden" name="redirect_sort" value="{{ sort }}" />
+                                        {% if user_row.is_active %}
+                                            <input type="hidden" name="is_active" value="0" />
+                                            <button class="act-btn disable" type="submit">Disable</button>
+                                        {% else %}
+                                            <input type="hidden" name="is_active" value="1" />
+                                            <button class="act-btn approve" type="submit">Approve</button>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% empty %}
+                        <tr><td colspan="5" class="muted" style="padding:30px 12px;">No users matched your search.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </body>
 </html>

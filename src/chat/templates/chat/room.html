@@ -1,282 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+{% load static %}
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Room {{ room_name }}</title>
-    <style>
-        :root {
-            --bg: #f3f7fa;
-            --panel: #ffffff;
-            --border: #d2dfea;
-            --text: #122033;
-            --muted: #637086;
-            --accent: #0f9d8f;
-            --accent-strong: #0b7469;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background:
-                linear-gradient(115deg, #e9f8ff 0%, transparent 36%),
-                linear-gradient(305deg, #ecffe8 0%, transparent 34%),
-                var(--bg);
-            font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-            color: var(--text);
-            padding: 20px;
-        }
-
-        .layout {
-            width: min(980px, 100%);
-            margin: 0 auto;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 15px 30px rgba(18, 32, 51, 0.08);
-        }
-
-        .head {
-            padding: 18px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .head h1 {
-            margin: 0;
-            font-size: 1.25rem;
-        }
-
-        .muted {
-            color: var(--muted);
-            font-size: 0.9rem;
-        }
-
-        #chat-log {
-            height: 55vh;
-            overflow-y: auto;
-            padding: 14px 20px;
-            background: #fbfdff;
-        }
-
-        .msg {
-            margin: 0 0 10px;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--bubble-bg, #fff);
-        }
-
-        .msg-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 10px;
-            margin-bottom: 6px;
-            font-size: 0.95rem;
-        }
-
-        .msg-time {
-            color: var(--muted);
-            font-size: 0.8rem;
-        }
-
-        .msg-body {
-            margin: 0;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .composer {
-            border-top: 1px solid var(--border);
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            padding: 14px 20px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 1rem;
-        }
-
-        button {
-            border: none;
-            border-radius: 10px;
-            padding: 0 18px;
-            color: #fff;
-            background: var(--accent);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        button:hover { background: var(--accent-strong); }
-
-        @media (max-width: 640px) {
-            .composer {
-                grid-template-columns: 1fr;
-            }
-            button {
-                height: 44px;
-            }
-        }
-    </style>
+    <title>{{ room_name }}</title>
+    <link rel="stylesheet" href="{% static 'chat/css/room.css' %}" />
 </head>
 <body>
     <main class="layout">
         <header class="head">
-            <div>
-                <h1>Room: {{ room_name }}</h1>
-                <div class="muted">You are: <span id="username-value">{{ username }}</span></div>
+            <div class="head-info">
+                <div class="room-avatar">{{ room_name|slice:":1"|upper }}</div>
+                <div class="room-meta">
+                    <h1>{{ room_name }}</h1>
+                    <div class="you">Logged in as <span>{{ username }}</span></div>
+                </div>
             </div>
-            <a href="/" class="muted">Back to lobby</a>
+            <a class="btn-back" href="/">&larr; Lobby</a>
         </header>
 
         <section id="chat-log">
-            {% for item in messages %}
-                <article class="msg" style="--bubble-bg: {{ item.color }};">
-                    <div class="msg-meta">
-                        <strong>{{ item.username }}</strong>
-                        <time class="msg-time" datetime="{{ item.created_at|date:'c' }}" data-ts="{{ item.created_at|date:'c' }}">
-                            {{ item.created_at|date:"M j, H:i" }}
-                        </time>
-                    </div>
-                    <p class="msg-body">{{ item.message }}</p>
-                </article>
+            {% for item in items %}
+                {% if item.type == 'message' %}
+                    <article class="msg {% if item.is_mine %}own-msg{% endif %}"
+                             data-msg-id="{{ item.id }}"
+                             style="--bubble-bg: {{ item.color }};">
+                        <div class="msg-meta">
+                            <strong>{{ item.username }}</strong>
+                            <time class="msg-time" data-ts="{{ item.time|date:'c' }}">{{ item.time|date:"M j, H:i" }}</time>
+                            {% if item.expires_at %}<span class="msg-timer" data-expires="{{ item.expires_at|date:'c' }}">--:--:--</span>{% endif %}
+                            {% if item.edited_at %}<span class="edited-tag">(edited)</span>{% endif %}
+                            {% if item.is_mine %}
+                            <div class="msg-actions">
+                                <button class="action-btn edit-btn" title="Edit">&#9998;</button>
+                                <button class="action-btn del-btn" title="Delete">&#10005;</button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <p class="msg-body">{{ item.message }}</p>
+                        {% if item.is_mine %}
+                        <div class="edit-form">
+                            <input class="edit-input" type="text" maxlength="1000" value="{{ item.message }}" />
+                            <button class="edit-save" title="Save">&#10003;</button>
+                            <button class="edit-cancel-btn" title="Cancel">&#10005;</button>
+                        </div>
+                        {% endif %}
+                    </article>
+                {% else %}
+                    <article class="msg msg-image {% if item.is_mine %}own-msg{% endif %}"
+                             data-img-id="{{ item.id }}"
+                             style="--bubble-bg: {{ item.color }};">
+                        <div class="msg-meta">
+                            <strong>{{ item.username }}</strong>
+                            <span class="img-timer" data-expires="{{ item.expires_at|date:'c' }}">60:00</span>
+                            {% if item.is_mine %}
+                            <div class="msg-actions">
+                                <button class="action-btn del-btn img-del-btn" title="Delete">&#10005;</button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <img class="chat-img" src="/chat/image/{{ item.id }}/" loading="lazy" alt="Image" />
+                    </article>
+                {% endif %}
             {% empty %}
-                <div id="empty-state" class="muted">No messages yet. Say hi.</div>
+                <div id="empty-state" class="msg-notice">No messages yet &mdash; say hi!</div>
             {% endfor %}
         </section>
 
+        <div class="img-preview-bar" id="img-preview-bar">
+            <img id="img-preview" src="" alt="preview" />
+            <span class="img-preview-info" id="img-preview-info"></span>
+            <button id="img-cancel">&#10005; Cancel</button>
+        </div>
+
         <section class="composer">
-            <input id="chat-message-input" type="text" maxlength="1000" placeholder="Write a message..." />
-            <button id="chat-message-submit" type="button">Send</button>
+            <input type="file" id="img-input" accept="image/*" style="display:none;" />
+            <button class="img-btn" id="img-btn" title="Send image">&#128247;</button>
+            <input id="chat-message-input" type="text" maxlength="1000" placeholder="Write a message&hellip;" />
+            <button id="chat-message-submit" type="button" title="Send message">
+                <span class="btn-icon">&#10148;</span>
+                <span class="btn-label">Send</span>
+            </button>
         </section>
     </main>
 
-    {{ room_name|json_script:"room-name" }}
-    {{ username|json_script:"username" }}
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close">&#10005; Close</button>
+        <img class="lightbox-img" id="lightbox-img" src="" alt=""
+             draggable="false"
+             oncontextmenu="return false" />
+    </div>
 
-    <script>
-        const roomName = JSON.parse(document.getElementById('room-name').textContent);
-        const username = JSON.parse(document.getElementById('username').textContent) || 'Anonymous';
+        {{ room_name|json_script:"room-name-data" }}
+    {{ username|json_script:"current-username-data" }}
+    <script src="{% static 'chat/js/room.js' %}"></script>
 
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const chatSocket = new WebSocket(
-            `${protocol}://${window.location.host}/ws/chat/${roomName}/`
-        );
-
-        const chatLog = document.getElementById('chat-log');
-        const messageInput = document.getElementById('chat-message-input');
-        const submitBtn = document.getElementById('chat-message-submit');
-        const emptyState = document.getElementById('empty-state');
-
-        function formatTimestamp(timestampValue) {
-            const dateObj = new Date(timestampValue);
-            if (Number.isNaN(dateObj.getTime())) {
-                return '';
-            }
-
-            return new Intl.DateTimeFormat(undefined, {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }).format(dateObj);
-        }
-
-        function hydrateExistingTimestamps() {
-            const existingTimes = document.querySelectorAll('.msg-time[data-ts]');
-            existingTimes.forEach((entry) => {
-                const formatted = formatTimestamp(entry.dataset.ts);
-                if (formatted) {
-                    entry.textContent = formatted;
-                }
-            });
-        }
-
-        function appendMessage(data) {
-            const wrapper = document.createElement('article');
-            wrapper.className = 'msg';
-            if (data.color) {
-                wrapper.style.setProperty('--bubble-bg', data.color);
-            }
-
-            const meta = document.createElement('div');
-            meta.className = 'msg-meta';
-
-            const sender = document.createElement('strong');
-            sender.textContent = data.username;
-            meta.appendChild(sender);
-
-            const timestamp = document.createElement('time');
-            timestamp.className = 'msg-time';
-            if (data.timestamp) {
-                timestamp.dateTime = data.timestamp;
-                timestamp.textContent = formatTimestamp(data.timestamp);
-            }
-            meta.appendChild(timestamp);
-            wrapper.appendChild(meta);
-
-            const body = document.createElement('p');
-            body.className = 'msg-body';
-            body.textContent = data.message;
-            wrapper.appendChild(body);
-
-            if (emptyState) {
-                emptyState.remove();
-            }
-
-            chatLog.appendChild(wrapper);
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
-
-        chatSocket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            appendMessage(data);
-        };
-
-        chatSocket.onclose = function() {
-            const warning = document.createElement('div');
-            warning.className = 'muted';
-            warning.textContent = 'Connection closed. Refresh the page to reconnect.';
-            chatLog.appendChild(warning);
-        };
-
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) {
-                return;
-            }
-
-            chatSocket.send(JSON.stringify({
-                message: message
-            }));
-            messageInput.value = '';
-            messageInput.focus();
-        }
-
-        messageInput.onkeyup = function(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        };
-
-        submitBtn.onclick = sendMessage;
-
-        hydrateExistingTimestamps();
-        chatLog.scrollTop = chatLog.scrollHeight;
-    </script>
 </body>
 </html>

@@ -6,65 +6,177 @@
     <title>Approval Pending</title>
     <style>
         :root {
-            --bg: #f7f6ef;
-            --panel: #ffffff;
-            --border: #d9d5c8;
-            --text: #22211a;
-            --muted: #676254;
-            --accent: #315bd6;
+            --bg: #060610;
+            --panel: #0b0b1e;
+            --surface: #07071a;
+            --border: rgba(0,245,255,0.15);
+            --text: #cce8ff;
+            --muted: #3d6b7a;
+            --cyan: #00f5ff;
+            --pink: #ff00de;
         }
-        * { box-sizing: border-box; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0;
             min-height: 100vh;
             display: grid;
             place-items: center;
-            background:
-                radial-gradient(circle at 8% 10%, #e6efdc 0%, transparent 40%),
-                radial-gradient(circle at 92% 90%, #dde7ff 0%, transparent 35%),
-                var(--bg);
-            font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+            background: var(--bg);
+            background-image:
+                linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            font-family: "Segoe UI", system-ui, sans-serif;
             color: var(--text);
-            padding: 20px;
+            padding: 24px 16px;
         }
+
         .card {
-            width: min(560px, 100%);
+            width: min(460px, 100%);
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 14px 28px rgba(34, 33, 26, 0.08);
+            border-radius: 10px;
+            box-shadow: 0 0 60px rgba(0,245,255,0.07);
+            overflow: hidden;
+            text-align: center;
+            position: relative;
         }
-        h1 { margin-top: 0; }
-        p { color: var(--muted); line-height: 1.45; }
-        a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 12%; right: 12%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), transparent);
+            box-shadow: 0 0 14px var(--cyan);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .card-top {
+            padding: 40px 36px 28px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        .card-top::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,245,255,0.3), transparent);
+            pointer-events: none;
+        }
+
+        .orb {
+            width: 72px;
+            height: 72px;
+            border-radius: 12px;
+            border: 1.5px solid var(--cyan);
+            background: rgba(0,245,255,0.07);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 28px rgba(0,245,255,0.3), inset 0 0 20px rgba(0,245,255,0.06);
+            color: var(--cyan);
+        }
+
+        .card-top h1 {
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        .card-top p {
+            font-size: 0.92rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .card-body {
+            padding: 24px 36px 32px;
+        }
+
+        .countdown-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(0,245,255,0.05);
+            border: 1px solid rgba(0,245,255,0.2);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 0.88rem;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+        }
+        .countdown-bar strong { color: var(--cyan); font-size: 1.1rem; text-shadow: 0 0 10px var(--cyan); }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            border-radius: 6px;
+            padding: 10px 20px;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .btn-primary {
+            background: var(--cyan);
+            color: #000;
+            border-color: var(--cyan);
+            box-shadow: 0 0 18px rgba(0,245,255,0.5);
+        }
+        .btn-primary:hover { box-shadow: 0 0 30px rgba(0,245,255,0.8); transform: translateY(-1px); }
+        .btn-secondary {
+            background: transparent;
+            color: var(--cyan);
+            border-color: rgba(0,245,255,0.3);
+        }
+        .btn-secondary:hover { background: rgba(0,245,255,0.07); box-shadow: 0 0 14px rgba(0,245,255,0.22); border-color: var(--cyan); }
     </style>
 </head>
 <body>
-    <main class="card">
-        <h1>Account Created</h1>
-        <p>
-            Your registration is pending. 
-            Please be patient while we review your information.
-        </p>
-        <p>
-            You will be redirected to the homepage in
-            <strong><span id="redirect-seconds">5</span>s</strong>.
-        </p>
-        <p><a href="/">Go now</a> | <a href="/accounts/login/">Back to login</a></p>
-    </main>
-    <script>
-        let seconds = 5;
-        const secondsEl = document.getElementById("redirect-seconds");
+    <div class="card">
+        <div class="card-top">
+            <div class="orb">&#9203;</div>
+            <h1>You&rsquo;re on the list</h1>
+            <p>Your account has been created and is pending admin approval. Hang tight &mdash; you&rsquo;ll be able to log in once approved.</p>
+        </div>
+        <div class="card-body">
+            <div class="countdown-bar">
+                <span>Redirecting to homepage in</span>
+                <strong><span id="redirect-seconds">5</span>s</strong>
+            </div>
+            <div class="actions">
+                <a class="btn btn-primary" href="/">Go now</a>
+                <a class="btn btn-secondary" href="/accounts/login/">Login page</a>
+            </div>
+        </div>
+    </div>
 
-        const timer = setInterval(() => {
-            seconds -= 1;
-            if (seconds <= 0) {
-                clearInterval(timer);
-                window.location.href = "/";
-                return;
-            }
-            secondsEl.textContent = String(seconds);
+    <script>
+        let s = 5;
+        const el = document.getElementById('redirect-seconds');
+        const t = setInterval(() => {
+            s -= 1;
+            if (s <= 0) { clearInterval(t); location.href = '/'; return; }
+            el.textContent = String(s);
         }, 1000);
     </script>
 </body>
