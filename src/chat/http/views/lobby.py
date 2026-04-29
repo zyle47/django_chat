@@ -11,6 +11,7 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
 from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats
+from chat.services.rate_limit import is_rate_limited
 from chat.services.room_access import grant_room_access
 
 
@@ -74,6 +75,11 @@ def enter_room(request):
 
     if room_obj.is_deleted:
         messages.error(request, "This room is currently unavailable.")
+        return redirect("index")
+
+    rl_key = f'rl:room:{request.session.session_key}:{room_name}'
+    if is_rate_limited(rl_key, 10, 300):
+        messages.error(request, "Too many attempts. Try again in 5 minutes.")
         return redirect("index")
 
     if not room_obj.check_password(room_password):

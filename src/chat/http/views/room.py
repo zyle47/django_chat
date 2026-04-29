@@ -124,6 +124,7 @@ def upload_image(request, room_name):
 
     # Compress to WebP via Pillow (decompression bomb guard applied first)
     try:
+        _prev_max = Image.MAX_IMAGE_PIXELS
         Image.MAX_IMAGE_PIXELS = settings.CHAT_IMAGE_MAX_PIXELS
         pil_img = Image.open(f)
         pil_img.verify()   # raises on corrupt files
@@ -137,6 +138,8 @@ def upload_image(request, room_name):
     except Exception:
         f.seek(0)
         compressed = f
+    finally:
+        Image.MAX_IMAGE_PIXELS = _prev_max
 
     img = ChatImage(
         room=room_obj,

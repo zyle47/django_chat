@@ -161,6 +161,8 @@
         }
         .footer-link a { color: var(--cyan); font-weight: 700; text-decoration: none; }
         .footer-link a:hover { text-shadow: 0 0 8px var(--cyan); }
+        .flash { border-radius: 5px; padding: 10px 14px; font-size: 0.85rem; border: 1px solid; }
+        .flash.error { background: rgba(255,59,59,0.07); border-color: rgba(255,59,59,0.3); color: #ff6b6b; }
     </style>
 </head>
 <body>
@@ -173,6 +175,13 @@
             <h1>Welcome back</h1>
             <p>Sign in to your account</p>
         </div>
+        {% if messages %}
+        <div style="padding: 14px 30px 0;">
+            {% for message in messages %}
+            <div class="flash {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
         <div class="card-body">
             <form method="post">
                 {% csrf_token %}
