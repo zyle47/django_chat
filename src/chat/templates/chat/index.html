@@ -677,18 +677,18 @@
         }
 
         function updateCount() {
-            const all     = roomList.querySelectorAll('.room-card');
-            const visible = roomList.querySelectorAll('.room-card:not([hidden])');
+            const all     = [...roomList.querySelectorAll('.room-card')];
+            const visible = all.filter(c => c.style.display !== 'none');
             const t = all.length, v = visible.length;
             roomCountEl.textContent = (t === v) ? `${t} room${t !== 1 ? 's' : ''}` : `${v} / ${t}`;
         }
 
         function filterRooms() {
-            const q = roomSearch.value.toLowerCase().trim();
+            const q = (roomSearch.value || roomNameInput.value).toLowerCase().trim();
             let visible = 0;
             roomList.querySelectorAll('.room-card').forEach(card => {
-                const match = card.dataset.roomName.toLowerCase().includes(q);
-                card.hidden = !match;
+                const match = !q || card.dataset.roomName.toLowerCase().includes(q);
+                card.style.display = match ? '' : 'none';
                 if (match) visible++;
             });
             updateCount();
@@ -736,6 +736,7 @@
         });
 
         roomSearch.addEventListener('input', filterRooms);
+        roomNameInput.addEventListener('input', filterRooms);
         roomNameInput.focus();
         colorizeOrbs();
         updateCount();
