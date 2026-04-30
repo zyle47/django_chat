@@ -1,3 +1,4 @@
+import hashlib
 from datetime import timedelta
 
 from django.contrib import messages
@@ -5,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, DateTimeField, Q, Sum
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import TruncHour
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -69,7 +71,12 @@ def index(request):
         'hourly': slots,
     }
 
-    return render(request, 'chat/index.html', {'rooms': rooms, 'stats': stats})
+    pw_lengths = {
+        hashlib.sha256(r.name.encode()).hexdigest(): r.password_length
+        for r in rooms
+    }
+
+    return render(request, 'chat/index.html', {'rooms': rooms, 'stats': stats, 'pw_lengths': pw_lengths})
 
 
 @require_POST
@@ -115,3 +122,12 @@ def enter_room(request):
 
     grant_room_access(request.session, room_obj.name)
     return redirect(reverse("room", kwargs={"room_name": room_obj.name}))
+
+
+@login_required
+def check_room(request):
+    name = request.GET.get('name', '').strip()
+    if not name:
+        return JsonResponse({'exists': False})
+    exists = ChatRoom.objects.filter(name=slugify(name), is_deleted=False).exists()
+    return JsonResponse({'exists': exists})

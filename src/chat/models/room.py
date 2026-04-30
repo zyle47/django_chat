@@ -6,6 +6,7 @@ from django.utils import timezone
 class ChatRoom(models.Model):
     name = models.SlugField(max_length=80, unique=True)
     password_hash = models.CharField(max_length=255, default="")
+    password_length = models.PositiveSmallIntegerField(default=0)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,6 +19,7 @@ class ChatRoom(models.Model):
 
     def set_password(self, raw_password):
         self.password_hash = make_password(raw_password)
+        self.password_length = len(raw_password)
 
     def check_password(self, raw_password):
         if not self.password_hash:

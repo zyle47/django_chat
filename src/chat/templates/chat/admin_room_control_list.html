@@ -309,8 +309,8 @@
         </form>
 
         <div class="tab-bar">
-            <button class="tab active" data-tab="active">Active <span class="tab-count" id="count-active">0</span></button>
-            <button class="tab" data-tab="deleted">Deactivated <span class="tab-count" id="count-deleted">0</span></button>
+            <button class="tab active" data-tab="deleted">Deactivated <span class="tab-count" id="count-deleted">0</span></button>
+            <button class="tab" data-tab="active">Active <span class="tab-count" id="count-active">0</span></button>
         </div>
 
         {% if messages %}
@@ -374,6 +374,17 @@
         </div>
     </div>
 
+    <div class="modal-backdrop" id="delete-modal">
+        <div class="modal">
+            <div class="modal-title">Permanent Delete</div>
+            <div class="modal-body">Permanently delete room <strong id="modal-roomname"></strong>? All messages and images will be lost. This cannot be undone.</div>
+            <div class="modal-actions">
+                <button class="act-btn" style="color:var(--muted);border-color:rgba(255,255,255,0.15);" onclick="closeModal()">Cancel</button>
+                <button class="act-btn permadelete" id="modal-confirm">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const tabs   = document.querySelectorAll('.tab');
         const rows   = document.querySelectorAll('tbody tr[data-status]');
@@ -392,8 +403,8 @@
 
         tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
-        // Default tab: active
-        switchTab('active');
+        // Default tab: deleted
+        switchTab('deleted');
 
         let pendingForm = null;
         function confirmDelete(btn) {
@@ -417,15 +428,5 @@
         });
 </script>
 
-    <div class="modal-backdrop" id="delete-modal">
-        <div class="modal">
-            <div class="modal-title">Permanent Delete</div>
-            <div class="modal-body">Permanently delete room <strong id="modal-roomname"></strong>? All messages and images will be lost. This cannot be undone.</div>
-            <div class="modal-actions">
-                <button class="act-btn" style="color:var(--muted);border-color:rgba(255,255,255,0.15);" onclick="closeModal()">Cancel</button>
-                <button class="act-btn permadelete" id="modal-confirm">Delete</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

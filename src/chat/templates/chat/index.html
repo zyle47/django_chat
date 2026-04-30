@@ -499,6 +499,40 @@
         }
         #activity-chart { width: 100%; height: 130px; display: block; }
 
+        .select-hint {
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-style: italic;
+        }
+        .admin-room-display {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--cyan);
+            text-shadow: 0 0 10px rgba(0,245,255,0.4);
+            letter-spacing: 0.05em;
+            margin-bottom: 14px;
+            word-break: break-word;
+        }
+        .fingerprint {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.66rem;
+            color: var(--cyan);
+            opacity: 0;
+            margin-top: 7px;
+            letter-spacing: 0.03em;
+            min-height: 1.1em;
+            transition: opacity 0.2s;
+            word-break: break-all;
+            line-height: 1.4;
+        }
+        .fingerprint.has-value { opacity: 0.6; }
+
+        @keyframes field-reveal {
+            from { opacity: 0; transform: translateY(-5px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .field-revealed { animation: field-reveal 0.25s ease; }
+
         @media (max-width: 820px) {
             .content { grid-template-columns: 1fr; }
             .join-panel { border-right: none; border-bottom: 1px solid var(--border); }
@@ -551,23 +585,43 @@
             <!-- Join / Create -->
             <div class="join-panel">
                 <span class="user-badge" style="margin-bottom:14px; display:inline-flex;">&#9632;&nbsp;<strong>{{ user.username }}</strong></span>
-                <div class="panel-label">// Join or Create</div>
-                <form method="post" action="/rooms/enter/">
-                    {% csrf_token %}
-                    <div class="form-field">
-                        <label for="room-name-input">Room name</label>
-                        <input id="room-name-input" name="room_name" type="text" maxlength="80" placeholder="e.g. general" autocomplete="off" />
-                    </div>
-                    <div class="form-field">
-                        <label for="room-password-input">Password</label>
-                        <input id="room-password-input" name="room_password" type="password" maxlength="128" placeholder="Required" />
-                    </div>
-                    <div style="margin-top:6px;">
-                        <button id="room-name-submit" class="btn btn-primary btn-lg btn-full" type="submit">
-                            Enter Room &rarr;
-                        </button>
-                    </div>
-                </form>
+
+                <div id="room-select-hint" class="select-hint">
+                    select a room from the browser &#8594;<br>
+                    {% if not user.is_superuser %}
+                    <span style="color:var(--muted); margin: 0 6px;">or</span><br>
+                    <button type="button" id="create-room-btn" style="background:none;border:none;color:var(--cyan);font-size:0.8rem;font-style:italic;cursor:pointer;padding:0;text-decoration:underline;">create new</button>
+                    {% endif %}
+                </div>
+
+                <div id="room-entry-panel" style="display:none;">
+                    {% if user.is_superuser %}
+                        <div class="panel-label">// Room</div>
+                        <div id="admin-room-name" class="admin-room-display"></div>
+                        <form method="post" action="/rooms/enter/">
+                            {% csrf_token %}
+                            <input type="hidden" id="room-name-input" name="room_name" />
+                            <button class="btn btn-primary btn-lg btn-full" type="submit">Enter Room &rarr;</button>
+                        </form>
+                    {% else %}
+                        <div class="fingerprint has-value" id="selected-fingerprint"></div>
+                        <div class="panel-label" style="margin-top:12px;">// Room Name</div>
+                        <form method="post" action="/rooms/enter/">
+                            {% csrf_token %}
+                            <div class="form-field" style="margin-top:8px;">
+                                <input id="room-name-input" name="room_name" type="text" maxlength="80" placeholder="type room name&hellip;" autocomplete="off" />
+                                <div class="fingerprint" id="room-fingerprint"></div>
+                            </div>
+                            <div class="form-field" id="password-field-wrap" style="display:none;">
+                                <label for="room-password-input">Password</label>
+                                <input id="room-password-input" name="room_password" type="password" maxlength="128" placeholder="Required" />
+                            </div>
+                            <div id="submit-wrap" style="margin-top:6px; display:none;">
+                                <button class="btn btn-primary btn-lg btn-full" type="submit">Enter Room &rarr;</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
 
             <!-- Rooms browser -->
@@ -628,6 +682,7 @@
         </div>
 
         {{ stats|json_script:"pulse-data" }}
+        {{ pw_lengths|json_script:"pw-lengths-data" }}
 
         {% else %}
 
@@ -652,11 +707,27 @@
 
     {% if user.is_authenticated %}
     <script>
-        const roomNameInput  = document.getElementById('room-name-input');
-        const roomPassInput  = document.getElementById('room-password-input');
-        const roomList       = document.getElementById('room-list');
-        const roomSearch     = document.getElementById('room-search');
-        const roomCountEl    = document.getElementById('room-count');
+        const roomNameInput     = document.getElementById('room-name-input');
+        const roomPassInput     = document.getElementById('room-password-input');
+        const roomList          = document.getElementById('room-list');
+        const roomSearch        = document.getElementById('room-search');
+        const roomCountEl       = document.getElementById('room-count');
+        const fingerprintEl     = document.getElementById('room-fingerprint');
+        const selectedFpEl      = document.getElementById('selected-fingerprint');
+        const passwordFieldWrap = document.getElementById('password-field-wrap');
+        const submitWrap        = document.getElementById('submit-wrap');
+        const selectHint        = document.getElementById('room-select-hint');
+        const entryPanel        = document.getElementById('room-entry-panel');
+        const adminRoomNameEl   = document.getElementById('admin-room-name');
+
+        let selectedRoomHash = null;
+        let requiredPwLength = 0;
+        const pwLengths = JSON.parse(document.getElementById('pw-lengths-data').textContent);
+
+        async function sha256hex(str) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         function hueFromName(name) {
             let h = 0;
@@ -683,11 +754,24 @@
             roomCountEl.textContent = (t === v) ? `${t} room${t !== 1 ? 's' : ''}` : `${v} / ${t}`;
         }
 
+        async function obfuscateCards() {
+            for (const card of document.querySelectorAll('.room-card')) {
+                const name = card.dataset.roomName;
+                if (!name) continue;
+                const hash = await sha256hex(name);
+                const nameEl = card.querySelector('.room-card-name');
+                if (nameEl) nameEl.textContent = hash.slice(0, 16);
+                const orb = card.querySelector('.room-orb');
+                if (orb) orb.textContent = hash[0].toUpperCase();
+            }
+        }
+
         function filterRooms() {
-            const q = (roomSearch.value || roomNameInput.value).toLowerCase().trim();
+            const q = roomSearch.value.toLowerCase().trim();
             let visible = 0;
             roomList.querySelectorAll('.room-card').forEach(card => {
-                const match = !q || card.dataset.roomName.toLowerCase().includes(q);
+                const displayText = (card.querySelector('.room-card-name')?.textContent || '').toLowerCase();
+                const match = !q || displayText.includes(q);
                 card.style.display = match ? '' : 'none';
                 if (match) visible++;
             });
@@ -705,27 +789,104 @@
             }
         }
 
-        function addRoomToList(roomName) {
+        async function addRoomToList(roomName) {
             if (!roomName || roomList.querySelector(`[data-room-name="${CSS.escape(roomName)}"]`)) return;
             const emptyEl = roomList.querySelector('#empty-state');
             if (emptyEl) emptyEl.remove();
             const c = colorForName(roomName);
+            const hash = await sha256hex(roomName);
             const btn = document.createElement('button');
             btn.className = 'room-card room-pill-btn';
             btn.dataset.roomName = roomName;
             btn.type = 'button';
-            btn.innerHTML = `<div class="room-orb" style="background:${c};color:#000">${roomName[0].toUpperCase()}</div><div class="room-card-name">${roomName}</div>`;
+            btn.innerHTML = `<div class="room-orb" style="background:${c};color:#000">${hash[0].toUpperCase()}</div><div class="room-card-name">${hash.slice(0, 16)}</div>`;
             roomList.appendChild(btn);
             updateCount();
             filterRooms();
         }
 
-        roomList.addEventListener('click', e => {
+        function showRoomFields() {
+            passwordFieldWrap.style.display = '';
+            submitWrap.style.display = 'none';
+            passwordFieldWrap.classList.remove('field-revealed');
+            void passwordFieldWrap.offsetWidth;
+            passwordFieldWrap.classList.add('field-revealed');
+            roomPassInput.focus();
+        }
+
+        function hideRoomFields() {
+            passwordFieldWrap.style.display = 'none';
+            submitWrap.style.display = 'none';
+            if (roomPassInput) roomPassInput.value = '';
+        }
+
+        if (roomPassInput) {
+            roomPassInput.addEventListener('input', () => {
+                const matches = requiredPwLength > 0
+                    ? roomPassInput.value.length === requiredPwLength
+                    : roomPassInput.value.length > 0;
+                submitWrap.style.display = matches ? '' : 'none';
+            });
+        }
+
+        function showEntryPanel() {
+            selectHint.style.display = 'none';
+            entryPanel.style.display = '';
+            entryPanel.classList.remove('field-revealed');
+            void entryPanel.offsetWidth;
+            entryPanel.classList.add('field-revealed');
+        }
+
+        const createRoomBtn = document.getElementById('create-room-btn');
+        if (createRoomBtn) {
+            createRoomBtn.addEventListener('click', () => {
+                selectedRoomHash = null;
+                requiredPwLength = 0;
+                selectedFpEl.textContent = '// new room';
+                if (fingerprintEl) { fingerprintEl.textContent = ''; fingerprintEl.classList.remove('has-value'); }
+                passwordFieldWrap.style.display = '';
+                submitWrap.style.display = 'none';
+                roomNameInput.value = '';
+                showEntryPanel();
+                roomNameInput.focus();
+            });
+        }
+
+        roomList.addEventListener('click', async e => {
             const btn = e.target.closest('.room-pill-btn');
             if (!btn) return;
-            roomNameInput.value = btn.dataset.roomName || '';
-            roomPassInput.focus();
+            const name = btn.dataset.roomName;
+            selectedRoomHash = await sha256hex(name);
+            requiredPwLength = pwLengths[selectedRoomHash] || 0;
+            showEntryPanel();
+            {% if user.is_superuser %}
+            adminRoomNameEl.textContent = name;
+            roomNameInput.value = name;
+            {% else %}
+            selectedFpEl.textContent = '// ' + selectedRoomHash;
+            roomNameInput.value = '';
+            if (fingerprintEl) { fingerprintEl.textContent = ''; fingerprintEl.classList.remove('has-value'); }
+            hideRoomFields();
+            roomNameInput.focus();
+            {% endif %}
         });
+
+        {% if not user.is_superuser %}
+        roomNameInput.addEventListener('input', async () => {
+            const val = roomNameInput.value.trim();
+            if (!val) {
+                fingerprintEl.textContent = '';
+                fingerprintEl.classList.remove('has-value');
+                if (selectedRoomHash) hideRoomFields();
+                return;
+            }
+            const hash = await sha256hex(val);
+            fingerprintEl.textContent = '// ' + hash;
+            fingerprintEl.classList.add('has-value');
+            if (!selectedRoomHash) return; // create mode — password field already visible
+            if (hash === selectedRoomHash) showRoomFields(); else hideRoomFields();
+        });
+        {% endif %}
 
         document.querySelectorAll('.flash-notification').forEach(el => {
             setTimeout(() => {
@@ -736,9 +897,8 @@
         });
 
         roomSearch.addEventListener('input', filterRooms);
-        roomNameInput.addEventListener('input', filterRooms);
-        roomNameInput.focus();
         colorizeOrbs();
+        obfuscateCards();
         updateCount();
 
         const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
