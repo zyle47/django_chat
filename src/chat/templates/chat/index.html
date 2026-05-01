@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chat Platform</title>
-    <link rel="stylesheet" href="{% static 'chat/css/index.css' %}" />
+    <link rel="stylesheet" href="{% static 'chat/css/lobby.css' %}" />
 </head>
 <body>
     <div class="app">
@@ -164,7 +164,8 @@
 
     {% if user.is_authenticated %}
     <script>const IS_SUPERUSER = {{ user.is_superuser|lower }};</script>
-    <script src="{% static 'chat/js/index.js' %}"></script>
+    <script src="{% static 'chat/js/lobby.js' %}"></script>
+    <script src="{% static 'chat/js/pulse.js' %}"></script>
     {% endif %}
 </body>
 </html>

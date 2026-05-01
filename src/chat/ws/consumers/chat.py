@@ -7,7 +7,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.utils import timezone
 
-from chat.models import ChatImage, ChatMessage, ChatRoom
+from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
 from chat.services.room_access import has_room_access
 from chat.services.room_colors import room_color_for_username
 
@@ -143,6 +143,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "color": event["color"],
             "expires_at": event["expires_at"],
         }))
+        await self._mark_room_read()
 
     async def message_deleted(self, event):
         await self.send(text_data=json.dumps({
@@ -213,3 +214,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _room_is_available(self):
         return ChatRoom.objects.filter(name=self.room_name, is_deleted=False).exists()
+
+    @database_sync_to_async
+    def _mark_room_read(self):
+        room_obj = ChatRoom.objects.filter(name=self.room_name, is_deleted=False).first()
+        if room_obj:
+            UserRoomRead.objects.update_or_create(
+                user_id=self.user_id,
+                room=room_obj,
+                defaults={"last_read_at": timezone.now()},
+            )

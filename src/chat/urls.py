@@ -1,7 +1,6 @@
 from django.urls import path
 
 from chat.http.views import (
-    check_room,
     delete_image,
     delete_room,
     delete_user,
@@ -21,7 +20,6 @@ from chat.http.views import (
 urlpatterns = [
     path("", index, name="index"),
     path("rooms/enter/", enter_room, name="enter-room"),
-    path("rooms/check/", check_room, name="check-room"),
     path("signup/", signup, name="signup"),
     path("signup/pending/", signup_pending, name="signup-pending"),
     path("chat/<slug:room_name>/", room, name="room"),
