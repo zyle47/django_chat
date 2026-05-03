@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Go to project directory
+cd /home/zyle44/Documents/nemanja/django_chat || exit 1
+
+# Ensure we are on master
+git checkout master
+
+# Fetch latest commits from origin
+git fetch origin
+
+LOCAL=$(git rev-parse @)
+REMOTE=$(git rev-parse @{u})
+
+if [ "$LOCAL" != "$REMOTE" ]; then
+    echo "$(date) - New updates found. Pulling..."
+    git pull origin master
+
+    # Activate virtual environment
+    source venv/bin/activate
+
+    # Install new dependencies if any
+    pip install -r requirements.txt
+
+    # Apply Django migrations
+    python manage.py migrate
+
+    # Restart Django service
+    systemctl restart django-chat.service
+
+    echo "$(date) - Update applied and service restarted."
+else
+    echo "$(date) - No updates."
+fi
