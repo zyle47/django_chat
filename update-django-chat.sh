@@ -33,6 +33,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a $LOG_FILE
     echo "********************************************************"
 else
+    echo "********************************************************"
     echo "$(date) - No updates."
     echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a $LOG_FILE
     echo "********************************************************"
