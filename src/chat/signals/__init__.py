@@ -1,1 +1,1 @@
-from . import room_signals  # noqa: F401
+from . import room_signals, user_signals  # noqa: F401

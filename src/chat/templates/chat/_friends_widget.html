@@ -1,0 +1,42 @@
+{% load static %}
+{{ user.username|json_script:"friends-current-username" }}
+<div id="friends-widget" class="friends-widget">
+    <button type="button" id="friends-fab" class="friends-fab" title="Friends" aria-label="Friends">
+        <span class="friends-fab-icon">&#9650;</span>
+        <span id="friends-fab-badge" class="friends-fab-badge" hidden>0</span>
+        <span id="friends-fab-unread-badge" class="friends-fab-unread-badge" hidden>0</span>
+    </button>
+    <div id="friends-panel" class="friends-panel" hidden>
+        <div id="friends-view" class="friends-view">
+            <div class="friends-panel-head">
+                <span class="panel-label">// Friends</span>
+                <button type="button" id="friends-close" class="friends-icon-btn" title="Close">&#10005;</button>
+            </div>
+
+            <div class="friends-section">
+                <div class="friends-section-label">Pending <span id="friends-pending-count">0</span></div>
+                <div id="friends-pending-list" class="friends-list"></div>
+            </div>
+
+            <div class="friends-section">
+                <div class="friends-section-label">Friends <span id="friends-friend-count">0</span></div>
+                <div id="friends-friend-list" class="friends-list"></div>
+            </div>
+        </div>
+
+        <div id="dm-view" class="dm-view" hidden>
+            <div class="friends-panel-head">
+                <button type="button" id="dm-back" class="friends-icon-btn" title="Back">&#8592;</button>
+                <span class="panel-label" id="dm-peer-label">// DM</span>
+                <button type="button" id="dm-close" class="friends-icon-btn" title="Close">&#10005;</button>
+            </div>
+            <div id="dm-log" class="dm-log"></div>
+            <div class="dm-composer">
+                <input id="dm-input" type="text" maxlength="2000" placeholder="Write a message&hellip;" autocomplete="off" />
+                <button type="button" id="dm-send" class="friend-btn">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+<link rel="stylesheet" href="{% static 'chat/css/friends.css' %}" />
+<script src="{% static 'chat/js/friends.js' %}" defer></script>

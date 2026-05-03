@@ -10,6 +10,7 @@ from django.utils import timezone
 from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
 from chat.services import friends as friend_svc
 from chat.services import presence
+from chat.services.realtime import FRIENDS_GROUP_NAME, LOBBY_GROUP_NAME
 from chat.services.room_access import has_room_access
 from chat.services.room_colors import room_color_for_username
 
@@ -42,11 +43,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self._friend_cmd_times = deque()
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_add(FRIENDS_GROUP_NAME, self.channel_name)
         await self.accept()
         presence.join(self.room_name, self.user_id, self.channel_name)
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        await self.channel_layer.group_discard(FRIENDS_GROUP_NAME, self.channel_name)
         if hasattr(self, "user_id") and hasattr(self, "room_name"):
             presence.leave(self.room_name, self.user_id, self.channel_name)
 
@@ -119,6 +122,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "expires_at": expires_at.isoformat(),
             },
         )
+        await self.channel_layer.group_send(
+            LOBBY_GROUP_NAME,
+            {
+                "type": "lobby_room_activity",
+                "room_name": self.room_name,
+                "from_user_id": self.user_id,
+            },
+        )
 
     async def _handle_delete(self, payload):
         if self._is_rate_limited():
@@ -131,6 +142,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {"type": "message_deleted", "message_id": msg_id},
+            )
+            await self.channel_layer.group_send(
+                LOBBY_GROUP_NAME,
+                {"type": "lobby_room_recompute", "room_name": self.room_name},
             )
 
     async def _handle_edit(self, payload):
@@ -297,6 +312,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if "from_username" in event:
             payload["from_username"] = event["from_username"]
         await self.send(text_data=json.dumps(payload))
+
+    async def friends_changed(self, event):
+        await self.send(text_data=json.dumps({"type": "friends_changed"}))
 
     # ── Group event handlers (broadcast to this socket) ──
 

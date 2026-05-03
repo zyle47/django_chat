@@ -23,7 +23,7 @@ def _ttl_seconds() -> int:
 
 
 def lookup_user(username: str):
-    return User.objects.filter(username=username).first()
+    return User.objects.filter(username=username, is_active=True).first()
 
 
 def send_request(from_user_id: int, target_username: str, room_obj):

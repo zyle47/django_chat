@@ -147,6 +147,7 @@ CHAT_MESSAGE_EXPIRY_SECONDS = 86400      # 24 hours
 
 # ── Friend system ──────────────────────────────────────────────────────────────
 FRIEND_REQUEST_EXPIRY_SECONDS = 5 * 60   # 5 minutes
+DM_MESSAGE_EXPIRY_SECONDS = 48 * 3600    # 48 hours
 
 # ── Misc ───────────────────────────────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
