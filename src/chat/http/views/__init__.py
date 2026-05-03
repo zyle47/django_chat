@@ -1,7 +1,8 @@
 from .admin_rooms import delete_room, room_control_list, set_room_deleted_status
 from .admin_users import delete_user, set_user_active_status, user_approval_list
 from .auth import signup, signup_pending
-from .lobby import enter_room, index
+from .friends import accept_pending, dm_history, list_friends, list_pending_requests, reject_pending, unread_count
+from .lobby import enter_room, index, room_unread_state
 from .room import delete_image, room, serve_image, upload_image
 
 __all__ = [
@@ -19,4 +20,11 @@ __all__ = [
     "room_control_list",
     "set_room_deleted_status",
     "delete_room",
+    "list_friends",
+    "list_pending_requests",
+    "accept_pending",
+    "reject_pending",
+    "dm_history",
+    "unread_count",
+    "room_unread_state",
 ]

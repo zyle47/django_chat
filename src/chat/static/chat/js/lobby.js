@@ -233,5 +233,20 @@ lobbySocket.onmessage = e => {
     try {
         const p = JSON.parse(e.data);
         if (p.type === 'room_created') addRoomToList(p.room_name);
+        else if (p.type === 'room_activity' || p.type === 'room_recompute') {
+            recomputeRoomUnread(p.room_name);
+        }
+        else if (p.type === 'friends_changed') document.dispatchEvent(new CustomEvent('friends-update'));
     } catch {}
 };
+
+async function recomputeRoomUnread(name) {
+    const card = roomList.querySelector(`.room-card[data-room-name="${CSS.escape(name)}"]`);
+    if (!card) return;
+    try {
+        const resp = await fetch(`/api/rooms/${encodeURIComponent(name)}/unread/`, { credentials: 'same-origin' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        card.classList.toggle('has-msgs', !!data.unread);
+    } catch {}
+}

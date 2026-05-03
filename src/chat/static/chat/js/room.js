@@ -32,6 +32,7 @@ function connect() {
             case 'chat_image':      appendImage(data);      break;
             case 'image_deleted':   handleImgDeleted(data); break;
             case 'whisper':         appendWhisper(data);    break;
+            case 'friends_changed': document.dispatchEvent(new CustomEvent('friends-update')); break;
             default:                appendMessage(data);    break;
         }
     };
@@ -184,6 +185,9 @@ function appendWhisper(data) {
     d.textContent = data.text || '';
     chatLog.appendChild(d);
     chatLog.scrollTop = chatLog.scrollHeight;
+    if (data.kind === 'friend_request' || data.kind === 'friend_accepted') {
+        document.dispatchEvent(new CustomEvent('friends-update'));
+    }
 }
 
 function appendMessage(data) {

@@ -16,6 +16,7 @@ from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
 from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
+from chat.services.realtime import publish_room_activity
 from chat.services.room_access import grant_room_access, has_room_access
 from chat.services.room_colors import room_color_for_username
 
@@ -170,6 +171,7 @@ def upload_image(request, room_name):
             "expires_at": img.expires_at.isoformat(),
         },
     )
+    publish_room_activity(room_obj.name, request.user.id)
     return JsonResponse({
         "ok": True,
         "image_id": img.id,

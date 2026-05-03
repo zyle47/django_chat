@@ -183,6 +183,7 @@
     </div>
 
     {% if user.is_authenticated %}
+    {% include "chat/_friends_widget.html" %}
     <script>const IS_SUPERUSER = {{ user.is_superuser|lower }};</script>
     <script src="{% static 'chat/js/lobby.js' %}"></script>
     <script src="{% static 'chat/js/pulse.js' %}"></script>
