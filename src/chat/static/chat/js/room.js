@@ -48,7 +48,6 @@ function connect() {
 
 const chatLog    = document.getElementById('chat-log');
 const msgInput   = document.getElementById('chat-message-input');
-const submitBtn  = document.getElementById('chat-message-submit');
 const imgBtn     = document.getElementById('img-btn');
 const imgInput   = document.getElementById('img-input');
 const previewBar = document.getElementById('img-preview-bar');
@@ -59,18 +58,8 @@ const imgCancel  = document.getElementById('img-cancel');
 let emptyState   = document.getElementById('empty-state');
 let pendingFile  = null;
 
-function updateSubmitLabel() {
-    const label = submitBtn.querySelector('.btn-label');
-    if (!label) return;
-    if (pendingFile) {
-        submitBtn.classList.add('uploading');
-        label.textContent = 'Upload ↑';
-        submitBtn.title = 'Upload image';
-    } else {
-        submitBtn.classList.remove('uploading');
-        label.textContent = 'Send';
-        submitBtn.title = 'Send message';
-    }
+function updateComposerHint() {
+    msgInput.placeholder = pendingFile ? 'Press Enter to upload image…' : 'Write a message…';
 }
 
 const USER_FONTS = [
@@ -120,7 +109,8 @@ imgInput.addEventListener('change', () => {
     imgPreview.src = URL.createObjectURL(file);
     imgPreviewInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
     previewBar.classList.add('visible');
-    updateSubmitLabel();
+    updateComposerHint();
+    msgInput.focus();
 });
 
 imgCancel.addEventListener('click', clearPreview);
@@ -130,17 +120,15 @@ function clearPreview() {
     imgInput.value = '';
     imgPreview.src = '';
     previewBar.classList.remove('visible');
-    updateSubmitLabel();
+    updateComposerHint();
 }
 
 async function doUpload() {
     if (!pendingFile) return;
     const form = new FormData();
     form.append('image', pendingFile);
-    submitBtn.disabled = true;
-    submitBtn.classList.add('uploading');
-    const label = submitBtn.querySelector('.btn-label');
-    if (label) label.textContent = 'Uploading…';
+    msgInput.disabled = true;
+    msgInput.placeholder = 'Uploading…';
     try {
         const resp = await fetch(`/chat/${roomName}/image/`, {
             method: 'POST',
@@ -156,8 +144,8 @@ async function doUpload() {
     } catch {
         appendNotice('Upload failed — network error.');
     }
-    submitBtn.disabled = false;
-    updateSubmitLabel();
+    msgInput.disabled = false;
+    updateComposerHint();
 }
 
 function sendMessage() {
@@ -168,8 +156,11 @@ function sendMessage() {
     msgInput.focus();
 }
 
-submitBtn.addEventListener('click', () => pendingFile ? doUpload() : sendMessage());
-msgInput.addEventListener('keyup', e => { if (e.key === 'Enter' && !pendingFile) sendMessage(); });
+msgInput.addEventListener('keyup', e => {
+    if (e.key !== 'Enter') return;
+    if (pendingFile) doUpload();
+    else sendMessage();
+});
 
 function appendNotice(text) {
     const d = document.createElement('div');
