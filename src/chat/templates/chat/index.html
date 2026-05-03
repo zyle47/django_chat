@@ -58,6 +58,16 @@
                         <form method="post" action="/rooms/enter/">
                             {% csrf_token %}
                             <input type="hidden" id="room-name-input" name="room_name" />
+                            <div class="lifetime-wrap" id="admin-lifetime-wrap" style="display:none;">
+                                <div class="panel-label">// Message Lifetime</div>
+                                <div class="lifetime-chips" data-target="admin-lifetime-input">
+                                    <button type="button" class="chip" data-seconds="3600">1h</button>
+                                    <button type="button" class="chip" data-seconds="21600">6h</button>
+                                    <button type="button" class="chip is-selected" data-seconds="86400">24h</button>
+                                    <button type="button" class="chip" data-seconds="604800">7d</button>
+                                </div>
+                                <input type="hidden" id="admin-lifetime-input" name="message_lifetime" value="86400" />
+                            </div>
                             <button class="btn btn-primary btn-lg btn-full" type="submit">Enter Room &rarr;</button>
                         </form>
                     {% else %}
@@ -72,6 +82,16 @@
                             <div class="form-field" id="password-field-wrap" style="display:none;">
                                 <label for="room-password-input">Password</label>
                                 <input id="room-password-input" name="room_password" type="password" maxlength="128" placeholder="Required" />
+                            </div>
+                            <div class="lifetime-wrap" id="user-lifetime-wrap" style="display:none;">
+                                <div class="panel-label">// Message Lifetime</div>
+                                <div class="lifetime-chips" data-target="user-lifetime-input">
+                                    <button type="button" class="chip" data-seconds="3600">1h</button>
+                                    <button type="button" class="chip" data-seconds="21600">6h</button>
+                                    <button type="button" class="chip is-selected" data-seconds="86400">24h</button>
+                                    <button type="button" class="chip" data-seconds="604800">7d</button>
+                                </div>
+                                <input type="hidden" id="user-lifetime-input" name="message_lifetime" value="86400" />
                             </div>
                             <div id="submit-wrap" style="margin-top:6px; display:none;">
                                 <button class="btn btn-primary btn-lg btn-full" type="submit">Enter Room &rarr;</button>

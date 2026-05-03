@@ -182,7 +182,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         room_obj = ChatRoom.objects.filter(name=self.room_name, is_deleted=False).first()
         if room_obj is None:
             raise ChatRoom.DoesNotExist
-        expires_at = timezone.now() + timezone.timedelta(seconds=settings.CHAT_MESSAGE_EXPIRY_SECONDS)
+        lifetime = room_obj.message_lifetime or settings.CHAT_MESSAGE_EXPIRY_SECONDS
+        expires_at = timezone.now() + timezone.timedelta(seconds=lifetime)
         msg = ChatMessage.objects.create(
             room=room_obj,
             user_id=self.user_id,

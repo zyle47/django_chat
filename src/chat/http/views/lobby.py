@@ -98,6 +98,9 @@ def enter_room(request):
         room_obj = ChatRoom(name=room_name)
         if room_password:
             room_obj.set_password(room_password)
+        raw_lifetime = request.POST.get("message_lifetime", "")
+        if raw_lifetime.isdigit() and int(raw_lifetime) > 0:
+            room_obj.message_lifetime = int(raw_lifetime)
         room_obj.save()
         grant_room_access(request.session, room_obj.name)
         return redirect(reverse("room", kwargs={"room_name": room_obj.name}))

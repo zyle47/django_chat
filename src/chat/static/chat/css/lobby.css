@@ -222,6 +222,45 @@ body {
     box-shadow: 0 0 0 1px rgba(0,245,255,0.2), 0 0 14px rgba(0,245,255,0.12);
 }
 
+/* Message lifetime chips */
+.lifetime-wrap {
+    margin: 14px 0 13px;
+}
+.lifetime-wrap .panel-label {
+    margin-bottom: 8px;
+}
+.lifetime-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.chip {
+    flex: 1 1 0;
+    min-width: 54px;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s, color 0.15s, background 0.15s;
+    font-family: inherit;
+}
+.chip:hover {
+    border-color: rgba(0,245,255,0.45);
+    color: var(--cyan);
+}
+.chip.is-selected {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    background: rgba(0,245,255,0.06);
+    box-shadow: 0 0 0 1px rgba(0,245,255,0.2), 0 0 14px rgba(0,245,255,0.15);
+}
+
 /* Right: rooms browser */
 .rooms-panel {
     padding: 26px 24px;
