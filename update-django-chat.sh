@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# Go to project directory
-cd /home/zyle44/Documents/nemanja/django_chat || exit 1
+VENV=/home/zyle44/Documents/nemanja/.venv
+PROJECT=/home/zyle44/Documents/nemanja/django_chat
+SRC=$PROJECT/src
+REQUIREMENTS=/home/zyle44/Documents/nemanja/requirements.txt
+LOG_FILE=$PROJECT/update_log.txt
 
-# Ensure we are on master
+cd "$PROJECT" || exit 1
+
 git checkout master
-
-# Fetch latest commits from origin
 git fetch origin
 
 LOCAL=$(git rev-parse @)
@@ -17,24 +19,19 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     echo "$(date) - New updates found. Pulling..."
     git pull origin master
 
-    # Activate virtual environment
-    source venv/bin/activate
-
-    # Install new dependencies if any
-    pip install -r requirements.txt
-
-    # Apply Django migrations
+    source "$VENV/bin/activate"
+    pip install -r "$REQUIREMENTS"
+    cd "$SRC"
     python manage.py migrate
-    sleep(1)
-    # Restart Django service
-    systemctl restart django-chat.service
+    sleep 1
+    sudo systemctl restart django-chat.service
 
     echo "$(date) - Update applied and service restarted."
-    echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a $LOG_FILE
+    echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a "$LOG_FILE"
     echo "********************************************************"
 else
     echo "********************************************************"
     echo "$(date) - No updates."
-    echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a $LOG_FILE
+    echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a "$LOG_FILE"
     echo "********************************************************"
 fi
