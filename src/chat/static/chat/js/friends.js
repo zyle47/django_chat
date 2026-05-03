@@ -92,19 +92,21 @@
         friendList.innerHTML = '';
         for (const f of items) {
             const row = document.createElement('div');
-            row.className = 'friend-row';
+            row.className = 'friend-row-wrap' + (f.banned ? ' banned' : '');
             row.dataset.username = f.username;
             const unread = f.unread_count || 0;
             const unreadHtml = (unread === 0)
                 ? ''
                 : `<span class="friend-unread">${escapeText(String(unread))}</span>`;
-            row.innerHTML = `
-                <div class="name"><span class="name-text">${escapeText(f.username)}</span>${unreadHtml}</div>
-                <div class="friend-actions">
-                    <button type="button" class="friend-btn" data-action="dm">DM</button>
-                    <button type="button" class="friend-btn danger" data-action="remove" disabled title="Remove — coming in v2">Remove</button>
-                    <button type="button" class="friend-btn danger" data-action="ban" disabled title="Ban — coming in v2">Ban</button>
-                </div>`;
+            const cardInner = `<div class="name"><span class="name-text">${escapeText(f.username)}</span>${unreadHtml}</div>`;
+            const cardHtml = f.banned
+                ? `<div class="friend-row banned-card">${cardInner}</div>`
+                : `<button type="button" class="friend-row" data-action="dm">${cardInner}</button>`;
+            const actionsHtml = f.banned
+                ? `<button type="button" class="friend-btn accept" data-action="unban" title="Unban — allow friend requests again">Unban</button>`
+                : `<button type="button" class="friend-btn danger" data-action="remove" title="Remove friend">Remove</button>
+                   <button type="button" class="friend-btn danger" data-action="ban" title="Ban — block all future requests">Ban</button>`;
+            row.innerHTML = `${cardHtml}<div class="friend-actions">${actionsHtml}</div>`;
             friendList.appendChild(row);
         }
     }
@@ -156,13 +158,46 @@
     });
 
     friendList.addEventListener('click', e => {
-        const btn = e.target.closest('.friend-btn');
+        const btn = e.target.closest('[data-action]');
         if (!btn || btn.disabled) return;
-        if (btn.dataset.action !== 'dm') return;
-        const row = btn.closest('.friend-row');
-        const name = row?.dataset.username;
-        if (name) openDM(name);
+        const wrap = btn.closest('.friend-row-wrap');
+        const name = wrap?.dataset.username;
+        if (!name) return;
+        const action = btn.dataset.action;
+        if (action === 'dm') openDM(name);
+        else if (action === 'remove') removeFriend(name);
+        else if (action === 'ban') banFriend(name);
+        else if (action === 'unban') unbanFriend(name);
     });
+
+    async function unbanFriend(name) {
+        if (!confirm(`Unban ${name}? They will be able to send you friend requests again.`)) return;
+        await postFriendAction('unban', name);
+    }
+
+    async function removeFriend(name) {
+        if (!confirm(`Remove ${name} from friends? Your DM history with them will be deleted.`)) return;
+        await postFriendAction('remove', name);
+    }
+
+    async function banFriend(name) {
+        if (!confirm(`Ban ${name}? They will no longer be able to send you friend requests.`)) return;
+        await postFriendAction('ban', name);
+    }
+
+    async function postFriendAction(action, name) {
+        const body = new URLSearchParams({ username: name });
+        await fetchJson(`/api/friends/${action}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrf(),
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body,
+        });
+        if (dmPeer === name) closeDM();
+        refresh();
+    }
 
     fab.addEventListener('click', () => {
         const opening = panel.hidden;
@@ -281,10 +316,13 @@
             if (!Number.isNaN(t) && t <= cutoff) target = el;
         }
         if (!target) return;
+        const wasAtBottom = isAtBottom();
+        const isLast = target === dmLog.querySelector('.dm-msg:last-of-type');
         const tag = document.createElement('div');
         tag.className = 'dm-seen-tag';
         tag.textContent = 'seen';
         target.after(tag);
+        if (wasAtBottom && isLast) dmLog.scrollTop = dmLog.scrollHeight;
     }
 
     function applyDmEdit(id, newText, editedAt) {

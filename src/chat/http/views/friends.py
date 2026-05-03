@@ -5,9 +5,10 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
-from chat.models import DirectMessage, DMRead, FriendRequest, Friendship
+from chat.models import DirectMessage, DMRead, FriendBlock, FriendRequest, Friendship
 from chat.services import dm as dm_svc
 from chat.services import friends as friend_svc
+from chat.services.realtime import publish_friends_changed
 
 User = get_user_model()
 
@@ -35,6 +36,21 @@ def list_friends(request):
             "username": other.username,
             "since": f.created_at.isoformat(),
             "unread_count": "10+" if n > 10 else n,
+            "banned": False,
+        })
+    blocks = (
+        FriendBlock.objects
+        .filter(blocker_id=me, blocked__is_active=True)
+        .select_related("blocked")
+        .order_by("-created_at")
+    )
+    for b in blocks:
+        friends.append({
+            "id": b.blocked.id,
+            "username": b.blocked.username,
+            "since": b.created_at.isoformat(),
+            "unread_count": 0,
+            "banned": True,
         })
     return JsonResponse({"friends": friends})
 
@@ -82,6 +98,40 @@ def reject_pending(request):
     if not name:
         return HttpResponseBadRequest("missing from_username")
     result = friend_svc.reject_request(request.user.id, name)
+    return JsonResponse(result, status=200 if result.get("ok") else 400)
+
+
+@require_POST
+@login_required
+def remove_friend(request):
+    name = request.POST.get("username", "").strip()
+    if not name:
+        return HttpResponseBadRequest("missing username")
+    result = friend_svc.remove_friend(request.user.id, name)
+    if result.get("ok"):
+        publish_friends_changed()
+    return JsonResponse(result, status=200 if result.get("ok") else 400)
+
+
+@require_POST
+@login_required
+def ban_friend(request):
+    name = request.POST.get("username", "").strip()
+    if not name:
+        return HttpResponseBadRequest("missing username")
+    result = friend_svc.ban_friend(request.user.id, name)
+    if result.get("ok"):
+        publish_friends_changed()
+    return JsonResponse(result, status=200 if result.get("ok") else 400)
+
+
+@require_POST
+@login_required
+def unban_friend(request):
+    name = request.POST.get("username", "").strip()
+    if not name:
+        return HttpResponseBadRequest("missing username")
+    result = friend_svc.unban_friend(request.user.id, name)
     return JsonResponse(result, status=200 if result.get("ok") else 400)
 
 

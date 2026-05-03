@@ -153,7 +153,14 @@
     gap: 6px;
 }
 
+.friend-row-wrap {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+}
 .friend-row {
+    flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -161,6 +168,37 @@
     border: 1px solid rgba(0,245,255,0.12);
     border-radius: 5px;
     background: #07071a;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.friend-row:hover {
+    border-color: rgba(0,245,255,0.45);
+    background: #0c0c25;
+    box-shadow: 0 0 12px rgba(0,245,255,0.15);
+}
+.friend-row-wrap > .friend-actions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex: 0 0 auto;
+}
+.friend-row.banned-card {
+    cursor: default;
+    opacity: 0.55;
+    filter: grayscale(0.4);
+}
+.friend-row.banned-card:hover {
+    border-color: rgba(0,245,255,0.12);
+    background: #07071a;
+    box-shadow: none;
+}
+.friend-row-wrap.banned .name-text::before {
+    content: '\26D4\00A0';
+    color: #ff3b3b;
+    font-size: 0.78rem;
 }
 .friend-row .name {
     flex: 1;
