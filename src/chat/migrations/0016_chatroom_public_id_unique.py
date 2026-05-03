@@ -3,7 +3,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("chat", "0010_chatroom_public_id_populate"),
+        ("chat", "0015_chatroom_public_id_populate"),
     ]
 
     operations = [

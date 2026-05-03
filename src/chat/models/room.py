@@ -10,6 +10,7 @@ class ChatRoom(models.Model):
     public_id = models.CharField(max_length=64, unique=True, db_index=True, editable=False, default="")
     password_hash = models.CharField(max_length=255, default="")
     password_length = models.PositiveSmallIntegerField(default=0)
+    message_lifetime = models.PositiveIntegerField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

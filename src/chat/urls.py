@@ -1,18 +1,25 @@
 from django.urls import path
 
 from chat.http.views import (
+    accept_pending,
     delete_image,
     delete_room,
     delete_user,
+    dm_history,
     enter_room,
     index,
+    list_friends,
+    list_pending_requests,
+    reject_pending,
     room,
     room_control_list,
+    room_unread_state,
     serve_image,
     set_room_deleted_status,
     set_user_active_status,
     signup,
     signup_pending,
+    unread_count,
     upload_image,
     user_approval_list,
 )
@@ -32,4 +39,11 @@ urlpatterns = [
     path("control/rooms/", room_control_list, name="admin-room-control-list"),
     path("control/rooms/<int:room_id>/deleted/", set_room_deleted_status, name="admin-room-set-deleted"),
     path("control/rooms/<int:room_id>/delete/", delete_room, name="admin-room-delete"),
+    path("api/friends/", list_friends, name="api-friends-list"),
+    path("api/friends/requests/", list_pending_requests, name="api-friends-requests"),
+    path("api/friends/accept/", accept_pending, name="api-friends-accept"),
+    path("api/friends/reject/", reject_pending, name="api-friends-reject"),
+    path("api/friends/<str:peer_username>/messages/", dm_history, name="api-dm-history"),
+    path("api/friends/unread-count/", unread_count, name="api-friends-unread-count"),
+    path("api/rooms/<str:public_id>/unread/", room_unread_state, name="api-room-unread"),
 ]

@@ -12,7 +12,7 @@ def populate_public_id(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("chat", "0009_chatroom_public_id"),
+        ("chat", "0014_chatroom_public_id"),
     ]
 
     operations = [

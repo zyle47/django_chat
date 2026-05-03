@@ -223,6 +223,15 @@ body {
     pointer-events: auto;
 }
 .msg-image .chat-img:hover { border-color: var(--cyan); box-shadow: 0 0 14px rgba(0,245,255,0.2); }
+.img-caption {
+    margin-top: 6px;
+    padding: 4px 2px;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    color: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
 .img-timer, .msg-timer {
     font-size: 0.72rem; font-family: "Courier New", monospace;
     letter-spacing: 0.06em; opacity: 0.8;
@@ -264,6 +273,33 @@ body {
 .msg-notice {
     text-align: center; font-size: 0.8rem;
     color: var(--muted); padding: 6px 0; letter-spacing: 0.04em;
+}
+
+.msg-whisper {
+    align-self: center;
+    max-width: 88%;
+    margin: 6px 0;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-align: center;
+    background: rgba(0,245,255,0.04);
+    border: 1px dashed rgba(0,245,255,0.35);
+    color: var(--cyan);
+    text-shadow: 0 0 6px rgba(0,245,255,0.4);
+}
+.msg-whisper.kind-friend_request {
+    border-color: rgba(255,0,222,0.5);
+    background: rgba(255,0,222,0.05);
+    color: var(--pink);
+    text-shadow: 0 0 6px rgba(255,0,222,0.45);
+}
+.msg-whisper.kind-friend_accepted {
+    border-color: rgba(0,255,159,0.5);
+    background: rgba(0,255,159,0.05);
+    color: var(--green);
+    text-shadow: 0 0 6px rgba(0,255,159,0.45);
 }
 
 /* ── Image preview ── */

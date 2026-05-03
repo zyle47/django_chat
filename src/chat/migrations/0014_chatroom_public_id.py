@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('chat', '0008_chatroom_password_length'),
+        ('chat', '0013_chatimage_caption'),
     ]
 
     operations = [

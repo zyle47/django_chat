@@ -5,11 +5,12 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count, DateTimeField, Q, Sum
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import TruncHour
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats, UserRoomRead
 from chat.services.rate_limit import is_rate_limited
@@ -100,6 +101,9 @@ def enter_room(request):
         room_obj = ChatRoom(name=room_name)
         if room_password:
             room_obj.set_password(room_password)
+        raw_lifetime = request.POST.get("message_lifetime", "")
+        if raw_lifetime.isdigit() and int(raw_lifetime) > 0:
+            room_obj.message_lifetime = int(raw_lifetime)
         room_obj.save()
         grant_room_access(request.session, room_obj.name)
         return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))
@@ -123,5 +127,30 @@ def enter_room(request):
 
     grant_room_access(request.session, room_obj.name)
     return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))
+
+
+@require_GET
+@login_required
+def room_unread_state(request, public_id):
+    room_obj = ChatRoom.objects.filter(public_id=public_id, is_deleted=False).only("id").first()
+    if room_obj is None:
+        return JsonResponse({"unread": False})
+    now = timezone.now()
+    latest_at = (
+        ChatMessage.objects
+        .filter(room_id=room_obj.id, is_deleted=False, expires_at__gt=now)
+        .order_by("-created_at")
+        .values_list("created_at", flat=True)
+        .first()
+    )
+    if latest_at is None:
+        return JsonResponse({"unread": False})
+    last_read = (
+        UserRoomRead.objects
+        .filter(user=request.user, room_id=room_obj.id)
+        .values_list("last_read_at", flat=True)
+        .first()
+    )
+    return JsonResponse({"unread": last_read is None or latest_at > last_read})
 
 

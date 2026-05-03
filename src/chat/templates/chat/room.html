@@ -61,6 +61,7 @@
                             {% endif %}
                         </div>
                         <img class="chat-img" src="/chat/image/{{ item.id }}/" loading="lazy" alt="Image" />
+                        {% if item.caption %}<div class="img-caption">{{ item.caption }}</div>{% endif %}
                     </article>
                 {% endif %}
             {% empty %}
@@ -78,10 +79,6 @@
             <input type="file" id="img-input" accept="image/*" style="display:none;" />
             <button class="img-btn" id="img-btn" title="Send image">&#128247;</button>
             <input id="chat-message-input" type="text" maxlength="1000" placeholder="Write a message&hellip;" />
-            <button id="chat-message-submit" type="button" title="Send message">
-                <span class="btn-icon">&#10148;</span>
-                <span class="btn-label">Send</span>
-            </button>
         </section>
     </main>
 
@@ -96,6 +93,7 @@
         {{ public_id|json_script:"room-public-id-data" }}
     {{ username|json_script:"current-username-data" }}
     <script src="{% static 'chat/js/room.js' %}"></script>
+    {% include "chat/_friends_widget.html" %}
 
 </body>
 </html>

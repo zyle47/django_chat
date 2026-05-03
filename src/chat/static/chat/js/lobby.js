@@ -10,6 +10,8 @@ const submitWrap        = document.getElementById('submit-wrap');
 const selectHint        = document.getElementById('room-select-hint');
 const entryPanel        = document.getElementById('room-entry-panel');
 const adminRoomNameEl   = document.getElementById('admin-room-name');
+const userLifetimeWrap  = document.getElementById('user-lifetime-wrap');
+const adminLifetimeWrap = document.getElementById('admin-lifetime-wrap');
 
 let selectedRoomHash = null;
 let requiredPwLength = 0;
@@ -80,7 +82,19 @@ function hideRoomFields() {
     passwordFieldWrap.style.display = 'none';
     submitWrap.style.display = 'none';
     if (roomPassInput) roomPassInput.value = '';
+    if (userLifetimeWrap) userLifetimeWrap.style.display = 'none';
 }
+
+document.querySelectorAll('.lifetime-chips').forEach(group => {
+    const target = document.getElementById(group.dataset.target);
+    group.addEventListener('click', e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        group.querySelectorAll('.chip').forEach(c => c.classList.remove('is-selected'));
+        chip.classList.add('is-selected');
+        if (target) target.value = chip.dataset.seconds;
+    });
+});
 
 if (roomPassInput) {
     roomPassInput.addEventListener('input', () => {
@@ -113,11 +127,13 @@ if (createRoomBtn) {
             adminCreateWrap.style.display = '';
             adminCreateInput.value = '';
             adminCreateInput.focus();
+            if (adminLifetimeWrap) adminLifetimeWrap.style.display = '';
         } else {
             if (selectedFpEl) selectedFpEl.textContent = '// new room';
             if (fingerprintEl) { fingerprintEl.textContent = ''; fingerprintEl.classList.remove('has-value'); }
             passwordFieldWrap.style.display = '';
             submitWrap.style.display = 'none';
+            if (userLifetimeWrap) userLifetimeWrap.style.display = '';
             roomNameInput.focus();
         }
     });
@@ -141,6 +157,7 @@ roomList.addEventListener('click', e => {
         adminRoomNameEl.textContent = name;
         adminRoomNameEl.style.display = 'block';
         document.getElementById('admin-create-wrap').style.display = 'none';
+        if (adminLifetimeWrap) adminLifetimeWrap.style.display = 'none';
         roomNameInput.value = name;
     } else {
         selectedFpEl.textContent = '// ' + selectedRoomHash;
@@ -185,5 +202,20 @@ lobbySocket.onmessage = e => {
     try {
         const p = JSON.parse(e.data);
         if (p.type === 'room_created') addRoomToList(p);
+        else if (p.type === 'room_activity' || p.type === 'room_recompute') {
+            recomputeRoomUnread(p.room_hash);
+        }
+        else if (p.type === 'friends_changed') document.dispatchEvent(new CustomEvent('friends-update'));
     } catch {}
 };
+
+async function recomputeRoomUnread(hash) {
+    const card = roomList.querySelector(`.room-card[data-room-hash="${CSS.escape(hash)}"]`);
+    if (!card) return;
+    try {
+        const resp = await fetch(`/api/rooms/${encodeURIComponent(hash)}/unread/`, { credentials: 'same-origin' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        card.classList.toggle('has-msgs', !!data.unread);
+    } catch {}
+}

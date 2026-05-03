@@ -32,6 +32,8 @@ function connect() {
             case 'message_edited':  handleMsgEdited(data);  break;
             case 'chat_image':      appendImage(data);      break;
             case 'image_deleted':   handleImgDeleted(data); break;
+            case 'whisper':         appendWhisper(data);    break;
+            case 'friends_changed': document.dispatchEvent(new CustomEvent('friends-update')); break;
             default:                appendMessage(data);    break;
         }
     };
@@ -47,7 +49,6 @@ function connect() {
 
 const chatLog    = document.getElementById('chat-log');
 const msgInput   = document.getElementById('chat-message-input');
-const submitBtn  = document.getElementById('chat-message-submit');
 const imgBtn     = document.getElementById('img-btn');
 const imgInput   = document.getElementById('img-input');
 const previewBar = document.getElementById('img-preview-bar');
@@ -58,18 +59,8 @@ const imgCancel  = document.getElementById('img-cancel');
 let emptyState   = document.getElementById('empty-state');
 let pendingFile  = null;
 
-function updateSubmitLabel() {
-    const label = submitBtn.querySelector('.btn-label');
-    if (!label) return;
-    if (pendingFile) {
-        submitBtn.classList.add('uploading');
-        label.textContent = 'Upload ↑';
-        submitBtn.title = 'Upload image';
-    } else {
-        submitBtn.classList.remove('uploading');
-        label.textContent = 'Send';
-        submitBtn.title = 'Send message';
-    }
+function updateComposerHint() {
+    msgInput.placeholder = pendingFile ? 'Press Enter to upload image…' : 'Write a message…';
 }
 
 const USER_FONTS = [
@@ -119,7 +110,8 @@ imgInput.addEventListener('change', () => {
     imgPreview.src = URL.createObjectURL(file);
     imgPreviewInfo.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
     previewBar.classList.add('visible');
-    updateSubmitLabel();
+    updateComposerHint();
+    msgInput.focus();
 });
 
 imgCancel.addEventListener('click', clearPreview);
@@ -129,17 +121,17 @@ function clearPreview() {
     imgInput.value = '';
     imgPreview.src = '';
     previewBar.classList.remove('visible');
-    updateSubmitLabel();
+    updateComposerHint();
 }
 
 async function doUpload() {
     if (!pendingFile) return;
+    const caption = msgInput.value.trim().slice(0, 1000);
     const form = new FormData();
     form.append('image', pendingFile);
-    submitBtn.disabled = true;
-    submitBtn.classList.add('uploading');
-    const label = submitBtn.querySelector('.btn-label');
-    if (label) label.textContent = 'Uploading…';
+    if (caption) form.append('caption', caption);
+    msgInput.disabled = true;
+    msgInput.placeholder = 'Uploading…';
     try {
         const resp = await fetch(`/chat/${roomPublicId}/image/`, {
             method: 'POST',
@@ -150,13 +142,14 @@ async function doUpload() {
         if (!resp.ok) {
             appendNotice(data.error || 'Upload failed.');
         } else {
+            msgInput.value = '';
             clearPreview();
         }
     } catch {
         appendNotice('Upload failed — network error.');
     }
-    submitBtn.disabled = false;
-    updateSubmitLabel();
+    msgInput.disabled = false;
+    updateComposerHint();
 }
 
 function sendMessage() {
@@ -167,8 +160,11 @@ function sendMessage() {
     msgInput.focus();
 }
 
-submitBtn.addEventListener('click', () => pendingFile ? doUpload() : sendMessage());
-msgInput.addEventListener('keyup', e => { if (e.key === 'Enter' && !pendingFile) sendMessage(); });
+msgInput.addEventListener('keyup', e => {
+    if (e.key !== 'Enter') return;
+    if (pendingFile) doUpload();
+    else sendMessage();
+});
 
 function appendNotice(text) {
     const d = document.createElement('div');
@@ -176,6 +172,17 @@ function appendNotice(text) {
     d.textContent = text;
     chatLog.appendChild(d);
     chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function appendWhisper(data) {
+    const d = document.createElement('div');
+    d.className = `msg-whisper kind-${data.kind || 'info'}`;
+    d.textContent = data.text || '';
+    chatLog.appendChild(d);
+    chatLog.scrollTop = chatLog.scrollHeight;
+    if (data.kind === 'friend_request' || data.kind === 'friend_accepted') {
+        document.dispatchEvent(new CustomEvent('friends-update'));
+    }
 }
 
 function appendMessage(data) {
@@ -228,9 +235,11 @@ function appendImage(data) {
                 <button class="action-btn del-btn img-del-btn" title="Delete">&#10005;</button>
             </div>` : ''}
         </div>
-        <img class="chat-img" src="${data.image_url}" loading="lazy" alt="Image" />`;
+        <img class="chat-img" src="${data.image_url}" loading="lazy" alt="Image" />
+        ${data.caption ? `<div class="img-caption"></div>` : ''}`;
     const strong = art.querySelector('strong');
     strong.textContent = data.username;
+    if (data.caption) art.querySelector('.img-caption').textContent = data.caption;
     applyNameFont(strong);
     chatLog.appendChild(art);
     chatLog.scrollTop = chatLog.scrollHeight;
