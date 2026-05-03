@@ -1,6 +1,6 @@
 from .direct_message import DirectMessage
 from .dm_read import DMRead
-from .friendship import FriendRequest, Friendship
+from .friendship import FriendBlock, FriendRequest, Friendship
 from .image import ChatImage
 from .message import ChatMessage
 from .room import ChatRoom
@@ -15,6 +15,7 @@ __all__ = [
     "UserRoomRead",
     "FriendRequest",
     "Friendship",
+    "FriendBlock",
     "DirectMessage",
     "DMRead",
 ]

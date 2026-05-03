@@ -75,3 +75,26 @@ class Friendship(models.Model):
 
     def __str__(self):
         return f"{self.user_low_id} ↔ {self.user_high_id}"
+
+
+class FriendBlock(models.Model):
+    """One-way block: `blocker` will not receive friend requests from `blocked`."""
+
+    blocker = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="outgoing_blocks"
+    )
+    blocked = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="incoming_blocks"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["blocker", "blocked"], name="unique_friend_block_pair"
+            ),
+        ]
+
+    @classmethod
+    def is_blocked(cls, blocker_id: int, blocked_id: int) -> bool:
+        return cls.objects.filter(blocker_id=blocker_id, blocked_id=blocked_id).exists()
