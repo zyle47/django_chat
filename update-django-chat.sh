@@ -24,7 +24,7 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     cd "$SRC"
     python manage.py migrate
     sleep 1
-    sudo systemctl restart django-chat.service
+    systemctl restart django-chat.service
 
     echo "$(date) - Update applied and service restarted."
     echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a "$LOG_FILE"
