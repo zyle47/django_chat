@@ -351,6 +351,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "image_url": event["image_url"],
             "username": event["username"],
             "color": event["color"],
+            "caption": event.get("caption", ""),
             "expires_at": event["expires_at"],
         }))
 
