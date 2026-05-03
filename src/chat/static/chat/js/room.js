@@ -31,6 +31,7 @@ function connect() {
             case 'message_edited':  handleMsgEdited(data);  break;
             case 'chat_image':      appendImage(data);      break;
             case 'image_deleted':   handleImgDeleted(data); break;
+            case 'whisper':         appendWhisper(data);    break;
             default:                appendMessage(data);    break;
         }
     };
@@ -173,6 +174,14 @@ function appendNotice(text) {
     const d = document.createElement('div');
     d.className = 'msg-notice';
     d.textContent = text;
+    chatLog.appendChild(d);
+    chatLog.scrollTop = chatLog.scrollHeight;
+}
+
+function appendWhisper(data) {
+    const d = document.createElement('div');
+    d.className = `msg-whisper kind-${data.kind || 'info'}`;
+    d.textContent = data.text || '';
     chatLog.appendChild(d);
     chatLog.scrollTop = chatLog.scrollHeight;
 }
