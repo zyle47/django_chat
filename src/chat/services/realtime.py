@@ -1,6 +1,8 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
+from chat.services.room_display import room_display
+
 LOBBY_GROUP_NAME = "lobby"
 FRIENDS_GROUP_NAME = "friends_global"
 
@@ -10,11 +12,15 @@ def publish_room_created(room_name):
     if channel_layer is None:
         return
 
+    d = room_display(room_name)
     async_to_sync(channel_layer.group_send)(
         LOBBY_GROUP_NAME,
         {
             "type": "lobby_room_created",
-            "room_name": room_name,
+            "room_hash": d['hash'],
+            "room_display": d['display'],
+            "room_icon": d['icon'],
+            "room_color": d['color'],
         },
     )
 
@@ -39,7 +45,21 @@ def publish_room_activity(room_name, from_user_id):
         LOBBY_GROUP_NAME,
         {
             "type": "lobby_room_activity",
-            "room_name": room_name,
+            "room_hash": room_display(room_name)['hash'],
             "from_user_id": from_user_id,
+        },
+    )
+
+
+def publish_room_recompute(room_name):
+    """Tell lobby clients to re-fetch unread state for this room."""
+    channel_layer = get_channel_layer()
+    if channel_layer is None:
+        return
+    async_to_sync(channel_layer.group_send)(
+        LOBBY_GROUP_NAME,
+        {
+            "type": "lobby_room_recompute",
+            "room_hash": room_display(room_name)['hash'],
         },
     )

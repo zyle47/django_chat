@@ -12,7 +12,6 @@ from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 
 from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
@@ -36,13 +35,8 @@ def _is_valid_image(f):
 
 
 @login_required
-def room(request, room_name):
-    normalized_room_name = slugify(room_name)
-    if not normalized_room_name:
-        messages.error(request, "Invalid room name.")
-        return redirect("index")
-
-    room_obj = ChatRoom.objects.filter(name=normalized_room_name, is_deleted=False).first()
+def room(request, public_id):
+    room_obj = ChatRoom.objects.filter(public_id=public_id, is_deleted=False).first()
     if room_obj is None:
         messages.error(request, "Room does not exist or is unavailable.")
         return redirect("index")
@@ -98,6 +92,7 @@ def room(request, room_name):
 
     context = {
         "room_name": room_obj.name,
+        "public_id": room_obj.public_id,
         "items": items,
         "username": request.user.username,
     }
@@ -106,8 +101,8 @@ def room(request, room_name):
 
 @login_required
 @require_POST
-def upload_image(request, room_name):
-    room_obj = ChatRoom.objects.filter(name=room_name, is_deleted=False).first()
+def upload_image(request, public_id):
+    room_obj = ChatRoom.objects.filter(public_id=public_id, is_deleted=False).first()
     if room_obj is None:
         return JsonResponse({"error": "Room not found."}, status=404)
     if not has_room_access(request.session, room_obj.name):
@@ -164,7 +159,7 @@ def upload_image(request, room_name):
 
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
-        f"chat_{room_obj.name}",
+        f"chat_{room_obj.public_id}",
         {
             "type": "chat_image",
             "image_id": img.id,
@@ -203,7 +198,7 @@ def serve_image(request, image_id):
 @require_POST
 def delete_image(request, image_id):
     img = get_object_or_404(ChatImage, id=image_id, user=request.user)
-    room_name = img.room.name
+    room_public_id = img.room.public_id
     try:
         if img.image and os.path.isfile(img.image.path):
             os.remove(img.image.path)
@@ -213,7 +208,7 @@ def delete_image(request, image_id):
 
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
-        f"chat_{room_name}",
+        f"chat_{room_public_id}",
         {"type": "image_deleted", "image_id": image_id},
     )
     return JsonResponse({"ok": True})

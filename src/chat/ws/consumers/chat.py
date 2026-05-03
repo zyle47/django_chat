@@ -24,20 +24,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4401)
             return
 
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = f"chat_{self.room_name}"
+        public_id = self.scope["url_route"]["kwargs"]["public_id"]
         self.username = user.username.strip()[:40] or "Anonymous"
         self.user_id = user.id
+
+        room_obj = await self._get_room(public_id)
+        if room_obj is None:
+            await self.close(code=4404)
+            return
+
+        self.room_name = room_obj.name
+        self.public_id = public_id
+        self.room_group_name = f"chat_{public_id}"
 
         session = self.scope.get("session")
         if not user.is_superuser:
             if session is None or not has_room_access(session, self.room_name):
                 await self.close(code=4403)
                 return
-
-        if not await self._room_is_available():
-            await self.close(code=4404)
-            return
 
         self._msg_times = deque()   # sliding window for rate limiting
         self._friend_cmd_times = deque()
@@ -126,7 +130,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             LOBBY_GROUP_NAME,
             {
                 "type": "lobby_room_activity",
-                "room_name": self.room_name,
+                "room_hash": self.public_id,
                 "from_user_id": self.user_id,
             },
         )
@@ -145,7 +149,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             await self.channel_layer.group_send(
                 LOBBY_GROUP_NAME,
-                {"type": "lobby_room_recompute", "room_name": self.room_name},
+                {"type": "lobby_room_recompute", "room_hash": self.public_id},
             )
 
     async def _handle_edit(self, payload):
@@ -194,7 +198,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self._cmd_reject(target)
 
     async def _cmd_add(self, target_username):
-        room_obj = await self._get_room()
+        room_obj = await self._get_room(self.public_id)
         if room_obj is None:
             return
         result = await database_sync_to_async(friend_svc.send_request)(
@@ -268,10 +272,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if code == "no_pending":
             return f"// no pending request from {result.get('from_username') or name}"
         return "// command failed"
-
-    @database_sync_to_async
-    def _get_room(self):
-        return ChatRoom.objects.filter(name=self.room_name, is_deleted=False).first()
 
     @database_sync_to_async
     def _delete_pending_request(self, target_user_id):
@@ -399,8 +399,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return msg.edited_at
 
     @database_sync_to_async
-    def _room_is_available(self):
-        return ChatRoom.objects.filter(name=self.room_name, is_deleted=False).exists()
+    def _get_room(self, public_id):
+        return ChatRoom.objects.filter(public_id=public_id, is_deleted=False).first()
 
     @database_sync_to_async
     def _mark_room_read(self):

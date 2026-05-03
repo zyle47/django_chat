@@ -90,6 +90,7 @@
     </div>
 
         {{ room_name|json_script:"room-name-data" }}
+        {{ public_id|json_script:"room-public-id-data" }}
     {{ username|json_script:"current-username-data" }}
     <script src="{% static 'chat/js/room.js' %}"></script>
     {% include "chat/_friends_widget.html" %}

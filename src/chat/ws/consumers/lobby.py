@@ -18,14 +18,13 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(FRIENDS_GROUP_NAME, self.channel_name)
 
     async def lobby_room_created(self, event):
-        await self.send(
-            text_data=json.dumps(
-                {
-                    "type": "room_created",
-                    "room_name": event["room_name"],
-                }
-            )
-        )
+        await self.send(text_data=json.dumps({
+            "type": "room_created",
+            "room_hash": event["room_hash"],
+            "room_display": event["room_display"],
+            "room_icon": event["room_icon"],
+            "room_color": event["room_color"],
+        }))
 
     async def lobby_room_activity(self, event):
         # Don't blink the user's own activity.
@@ -33,13 +32,13 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             return
         await self.send(text_data=json.dumps({
             "type": "room_activity",
-            "room_name": event["room_name"],
+            "room_hash": event["room_hash"],
         }))
 
     async def lobby_room_recompute(self, event):
         await self.send(text_data=json.dumps({
             "type": "room_recompute",
-            "room_name": event["room_name"],
+            "room_hash": event["room_hash"],
         }))
 
     async def friends_changed(self, event):

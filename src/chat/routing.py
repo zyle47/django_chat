@@ -4,6 +4,6 @@ from chat.ws.consumers import ChatConsumer, DMConsumer, LobbyConsumer
 
 websocket_urlpatterns = [
     re_path(r"ws/lobby/$", LobbyConsumer.as_asgi()),
-    re_path(r"ws/chat/(?P<room_name>[-a-zA-Z0-9_]+)/$", ChatConsumer.as_asgi()),
+    re_path(r"ws/chat/(?P<public_id>[0-9a-f]{64})/$", ChatConsumer.as_asgi()),
     re_path(r"ws/dm/(?P<peer_username>[\w.@+-]+)/$", DMConsumer.as_asgi()),
 ]

@@ -29,8 +29,8 @@ urlpatterns = [
     path("rooms/enter/", enter_room, name="enter-room"),
     path("signup/", signup, name="signup"),
     path("signup/pending/", signup_pending, name="signup-pending"),
-    path("chat/<slug:room_name>/", room, name="room"),
-    path("chat/<slug:room_name>/image/", upload_image, name="upload-image"),
+    path("chat/<str:public_id>/", room, name="room"),
+    path("chat/<str:public_id>/image/", upload_image, name="upload-image"),
     path("chat/image/<int:image_id>/", serve_image, name="serve-image"),
     path("chat/image/<int:image_id>/delete/", delete_image, name="delete-image"),
     path("control/users/", user_approval_list, name="admin-user-approval-list"),
@@ -45,5 +45,5 @@ urlpatterns = [
     path("api/friends/reject/", reject_pending, name="api-friends-reject"),
     path("api/friends/<str:peer_username>/messages/", dm_history, name="api-dm-history"),
     path("api/friends/unread-count/", unread_count, name="api-friends-unread-count"),
-    path("api/rooms/<slug:room_name>/unread/", room_unread_state, name="api-room-unread"),
+    path("api/rooms/<str:public_id>/unread/", room_unread_state, name="api-room-unread"),
 ]
