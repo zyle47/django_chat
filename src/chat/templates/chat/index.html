@@ -93,9 +93,9 @@
                 </div>
                 <div id="room-list" class="rooms-grid">
                     {% for room in rooms %}
-                        <button class="room-card room-pill-btn{% if room.has_unread %} has-msgs{% endif %}" data-room-name="{{ room.name }}" type="button">
-                            <div class="room-orb" data-name="{{ room.name }}">{{ room.name|slice:":1"|upper }}</div>
-                            <div class="room-card-name">{{ room.name }}</div>
+                        <button class="room-card room-pill-btn{% if room.has_unread %} has-msgs{% endif %}" data-room-hash="{{ room.hash }}"{% if user.is_superuser %} data-room-name="{{ room.name }}"{% endif %} type="button">
+                            <div class="room-orb" style="background:{{ room.color }};color:#000">{{ room.icon }}</div>
+                            <div class="room-card-name">{{ room.display }}</div>
                         </button>
                     {% empty %}
                         <div class="empty-state" id="empty-state">

@@ -19,20 +19,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4401)
             return
 
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = f"chat_{self.room_name}"
+        public_id = self.scope["url_route"]["kwargs"]["public_id"]
         self.username = user.username.strip()[:40] or "Anonymous"
         self.user_id = user.id
+
+        room_obj = await self._get_room(public_id)
+        if room_obj is None:
+            await self.close(code=4404)
+            return
+
+        self.room_name = room_obj.name
+        self.room_group_name = f"chat_{public_id}"
 
         session = self.scope.get("session")
         if not user.is_superuser:
             if session is None or not has_room_access(session, self.room_name):
                 await self.close(code=4403)
                 return
-
-        if not await self._room_is_available():
-            await self.close(code=4404)
-            return
 
         self._msg_times = deque()   # sliding window for rate limiting
 
@@ -212,8 +215,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return msg.edited_at
 
     @database_sync_to_async
-    def _room_is_available(self):
-        return ChatRoom.objects.filter(name=self.room_name, is_deleted=False).exists()
+    def _get_room(self, public_id):
+        return ChatRoom.objects.filter(public_id=public_id, is_deleted=False).first()
 
     @database_sync_to_async
     def _mark_room_read(self):

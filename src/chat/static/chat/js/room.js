@@ -4,7 +4,8 @@ function setViewportHeight() {
 setViewportHeight();
 window.addEventListener('resize', setViewportHeight);
 
-const roomName       = JSON.parse(document.getElementById('room-name-data').textContent);
+const roomName        = JSON.parse(document.getElementById('room-name-data').textContent);
+const roomPublicId    = JSON.parse(document.getElementById('room-public-id-data').textContent);
 const currentUsername = JSON.parse(document.getElementById('current-username-data').textContent) || 'Anonymous';
 const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
 let socket;
@@ -13,7 +14,7 @@ let heartbeatTimer = null;
 let manualClose = false;
 
 function connect() {
-    socket = new WebSocket(`${protocol}://${location.host}/ws/chat/${roomName}/`);
+    socket = new WebSocket(`${protocol}://${location.host}/ws/chat/${roomPublicId}/`);
 
     socket.onopen = () => {
         reconnectDelay = 1000;
@@ -140,7 +141,7 @@ async function doUpload() {
     const label = submitBtn.querySelector('.btn-label');
     if (label) label.textContent = 'Uploading…';
     try {
-        const resp = await fetch(`/chat/${roomName}/image/`, {
+        const resp = await fetch(`/chat/${roomPublicId}/image/`, {
             method: 'POST',
             headers: { 'X-CSRFToken': getCsrf() },
             body: form,

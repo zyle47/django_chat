@@ -1,4 +1,3 @@
-import hashlib
 from datetime import timedelta
 
 from django.contrib import messages
@@ -15,6 +14,7 @@ from django.views.decorators.http import require_POST
 from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats, UserRoomRead
 from chat.services.rate_limit import is_rate_limited
 from chat.services.room_access import grant_room_access
+from chat.services.room_display import room_display
 
 
 @login_required
@@ -44,6 +44,11 @@ def index(request):
             room.latest_msg_at is not None
             and (room.user_last_read_at is None or room.latest_msg_at > room.user_last_read_at)
         )
+        d = room_display(room.name)
+        room.hash = d['hash']
+        room.display = d['display']
+        room.icon = d['icon']
+        room.color = d['color']
 
     hourly_qs = (
         ChatMessage.objects
@@ -70,10 +75,7 @@ def index(request):
         'hourly': slots,
     }
 
-    pw_lengths = {
-        hashlib.sha256(r.name.encode()).hexdigest(): r.password_length
-        for r in rooms
-    }
+    pw_lengths = {room.hash: room.password_length for room in rooms}
 
     return render(request, 'chat/index.html', {'rooms': rooms, 'stats': stats, 'pw_lengths': pw_lengths})
 
@@ -100,7 +102,7 @@ def enter_room(request):
             room_obj.set_password(room_password)
         room_obj.save()
         grant_room_access(request.session, room_obj.name)
-        return redirect(reverse("room", kwargs={"room_name": room_obj.name}))
+        return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))
 
     if room_obj.is_deleted:
         messages.error(request, "This room is currently unavailable.")
@@ -108,7 +110,7 @@ def enter_room(request):
 
     if request.user.is_superuser:
         grant_room_access(request.session, room_obj.name)
-        return redirect(reverse("room", kwargs={"room_name": room_obj.name}))
+        return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))
 
     rl_key = f'rl:room:{request.session.session_key}:{room_name}'
     if is_rate_limited(rl_key, 10, 300):
@@ -120,6 +122,6 @@ def enter_room(request):
         return redirect("index")
 
     grant_room_access(request.session, room_obj.name)
-    return redirect(reverse("room", kwargs={"room_name": room_obj.name}))
+    return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))
 
 

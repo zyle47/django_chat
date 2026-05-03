@@ -15,28 +15,12 @@ let selectedRoomHash = null;
 let requiredPwLength = 0;
 const pwLengths = JSON.parse(document.getElementById('pw-lengths-data').textContent);
 
+
 async function sha256hex(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function hueFromName(name) {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-    return h % 360;
-}
-function colorForName(name) {
-    const h = hueFromName(name);
-    return `hsl(${h}, 100%, 60%)`;
-}
-
-function colorizeOrbs() {
-    document.querySelectorAll('.room-orb[data-name]').forEach(orb => {
-        const c = colorForName(orb.dataset.name);
-        orb.style.background = c;
-        orb.style.color = '#000';
-    });
-}
 
 function updateCount() {
     const all     = [...roomList.querySelectorAll('.room-card')];
@@ -45,17 +29,6 @@ function updateCount() {
     roomCountEl.textContent = (t === v) ? `${t} room${t !== 1 ? 's' : ''}` : `${v} / ${t}`;
 }
 
-async function obfuscateCards() {
-    for (const card of document.querySelectorAll('.room-card')) {
-        const name = card.dataset.roomName;
-        if (!name) continue;
-        const hash = await sha256hex(name);
-        const nameEl = card.querySelector('.room-card-name');
-        if (nameEl) nameEl.textContent = hash.slice(0, 16);
-        const orb = card.querySelector('.room-orb');
-        if (orb) orb.textContent = hash[0].toUpperCase();
-    }
-}
 
 function filterRooms() {
     const q = roomSearch.value.toLowerCase().trim();
@@ -80,17 +53,15 @@ function filterRooms() {
     }
 }
 
-async function addRoomToList(roomName) {
-    if (!roomName || roomList.querySelector(`[data-room-name="${CSS.escape(roomName)}"]`)) return;
+function addRoomToList({ room_hash, room_display, room_icon, room_color }) {
+    if (!room_hash || roomList.querySelector(`[data-room-hash="${room_hash}"]`)) return;
     const emptyEl = roomList.querySelector('#empty-state');
     if (emptyEl) emptyEl.remove();
-    const c = colorForName(roomName);
-    const hash = await sha256hex(roomName);
     const btn = document.createElement('button');
     btn.className = 'room-card room-pill-btn';
-    btn.dataset.roomName = roomName;
+    btn.dataset.roomHash = room_hash;
     btn.type = 'button';
-    btn.innerHTML = `<div class="room-orb" style="background:${c};color:#000">${hash[0].toUpperCase()}</div><div class="room-card-name">${hash.slice(0, 16)}</div>`;
+    btn.innerHTML = `<div class="room-orb" style="background:${room_color};color:#000">${room_icon}</div><div class="room-card-name">${room_display}</div>`;
     roomList.appendChild(btn);
     updateCount();
     filterRooms();
@@ -159,14 +130,14 @@ if (adminCreateInput) {
     });
 }
 
-roomList.addEventListener('click', async e => {
+roomList.addEventListener('click', e => {
     const btn = e.target.closest('.room-pill-btn');
     if (!btn) return;
-    const name = btn.dataset.roomName;
-    selectedRoomHash = await sha256hex(name);
+    selectedRoomHash = btn.dataset.roomHash;
     requiredPwLength = pwLengths[selectedRoomHash] || 0;
     showEntryPanel();
     if (IS_SUPERUSER) {
+        const name = btn.dataset.roomName;
         adminRoomNameEl.textContent = name;
         adminRoomNameEl.style.display = 'block';
         document.getElementById('admin-create-wrap').style.display = 'none';
@@ -206,8 +177,6 @@ document.querySelectorAll('.flash-notification').forEach(el => {
 });
 
 roomSearch.addEventListener('input', filterRooms);
-colorizeOrbs();
-obfuscateCards();
 updateCount();
 
 const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -215,6 +184,6 @@ const lobbySocket = new WebSocket(`${protocol}://${location.host}/ws/lobby/`);
 lobbySocket.onmessage = e => {
     try {
         const p = JSON.parse(e.data);
-        if (p.type === 'room_created') addRoomToList(p.room_name);
+        if (p.type === 'room_created') addRoomToList(p);
     } catch {}
 };
