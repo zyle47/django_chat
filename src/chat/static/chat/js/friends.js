@@ -94,8 +94,12 @@
             const row = document.createElement('div');
             row.className = 'friend-row';
             row.dataset.username = f.username;
+            const unread = f.unread_count || 0;
+            const unreadHtml = (unread === 0)
+                ? ''
+                : `<span class="friend-unread">${escapeText(String(unread))}</span>`;
             row.innerHTML = `
-                <div class="name">${escapeText(f.username)}</div>
+                <div class="name"><span class="name-text">${escapeText(f.username)}</span>${unreadHtml}</div>
                 <div class="friend-actions">
                     <button type="button" class="friend-btn" data-action="dm">DM</button>
                     <button type="button" class="friend-btn danger" data-action="remove" disabled title="Remove — coming in v2">Remove</button>

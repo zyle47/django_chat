@@ -25,13 +25,16 @@ def list_friends(request):
         .select_related("user_low", "user_high")
         .order_by("-created_at")
     )
+    unread_by_peer = dm_svc.unread_counts_by_peer(me)
     friends = []
     for f in rows:
         other = f.user_high if f.user_low_id == me else f.user_low
+        n = unread_by_peer.get(other.id, 0)
         friends.append({
             "id": other.id,
             "username": other.username,
             "since": f.created_at.isoformat(),
+            "unread_count": "10+" if n > 10 else n,
         })
     return JsonResponse({"friends": friends})
 

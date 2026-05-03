@@ -8,8 +8,8 @@
 
 .friends-widget {
     position: fixed;
-    right: 22px;
-    bottom: 22px;
+    right: 28px;
+    bottom: 28px;
     z-index: 9000;
     font-family: "Segoe UI", system-ui, sans-serif;
     color: #cce8ff;
@@ -37,7 +37,10 @@
 }
 .friends-fab-icon {
     font-size: 1.4rem;
+    line-height: 1;
     text-shadow: 0 0 10px #00f5ff;
+    display: block;
+    transform: translateY(-2px);
 }
 .friends-fab-badge,
 .friends-fab-unread-badge {
@@ -70,7 +73,7 @@
     position: absolute;
     right: 0;
     bottom: 66px;
-    width: 320px;
+    width: 420px;
     max-height: min(70vh, 520px);
     background: #0b0b1e;
     border: 1px solid rgba(0,245,255,0.25);
@@ -161,11 +164,35 @@
 }
 .friend-row .name {
     flex: 1;
+    min-width: 0;
     font-size: 0.88rem;
     color: #cce8ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+.friend-row .name-text {
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+.friend-unread {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #00f5ff;
+    color: #001318;
+    font-size: 0.66rem;
+    font-weight: 800;
+    box-shadow: 0 0 8px rgba(0,245,255,0.7);
 }
 .friend-row .friend-actions {
     display: flex;
