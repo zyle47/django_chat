@@ -260,7 +260,7 @@
             divider.className = 'dm-new-divider';
             divider.textContent = '/// new messages ///';
             firstUnread.before(divider);
-            dmLog.scrollTop = firstUnread.offsetTop + firstUnread.offsetHeight - dmLog.clientHeight - 52;
+            dmLog.scrollTop = firstUnread.offsetTop + firstUnread.offsetHeight - dmLog.clientHeight - 50;
         } else {
             dmLog.scrollTop = dmLog.scrollHeight;
         }

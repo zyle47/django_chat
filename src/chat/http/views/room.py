@@ -89,6 +89,7 @@ def room(request, room_name):
             "id": img.id,
             "username": img.username,
             "color": img.color,
+            "caption": img.caption,
             "time": img.uploaded_at,
             "expires_at": img.expires_at,
             "is_mine": img.user_id == request.user.id,
@@ -128,6 +129,7 @@ def upload_image(request, room_name):
     if active_count >= settings.CHAT_IMAGE_MAX_PER_USER:
         return JsonResponse({"error": f"Max {settings.CHAT_IMAGE_MAX_PER_USER} images per user."}, status=400)
 
+    caption = request.POST.get("caption", "").strip()[:1000]
     color = room_color_for_username(room_obj.name, request.user.username)
     expires_at = timezone.now() + timezone.timedelta(seconds=settings.CHAT_IMAGE_EXPIRY_SECONDS)
 
@@ -155,6 +157,7 @@ def upload_image(request, room_name):
         user=request.user,
         username=request.user.username[:40],
         color=color,
+        caption=caption,
         expires_at=expires_at,
     )
     img.image.save(f"{request.user.username}.webp", compressed, save=True)
@@ -168,6 +171,7 @@ def upload_image(request, room_name):
             "image_url": f"/chat/image/{img.id}/",
             "username": img.username,
             "color": color,
+            "caption": img.caption,
             "expires_at": img.expires_at.isoformat(),
         },
     )

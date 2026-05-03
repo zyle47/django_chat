@@ -223,6 +223,15 @@ body {
     pointer-events: auto;
 }
 .msg-image .chat-img:hover { border-color: var(--cyan); box-shadow: 0 0 14px rgba(0,245,255,0.2); }
+.img-caption {
+    margin-top: 6px;
+    padding: 4px 2px;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    color: inherit;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
 .img-timer, .msg-timer {
     font-size: 0.72rem; font-family: "Courier New", monospace;
     letter-spacing: 0.06em; opacity: 0.8;

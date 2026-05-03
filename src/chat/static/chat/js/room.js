@@ -125,8 +125,10 @@ function clearPreview() {
 
 async function doUpload() {
     if (!pendingFile) return;
+    const caption = msgInput.value.trim().slice(0, 1000);
     const form = new FormData();
     form.append('image', pendingFile);
+    if (caption) form.append('caption', caption);
     msgInput.disabled = true;
     msgInput.placeholder = 'Uploading…';
     try {
@@ -139,6 +141,7 @@ async function doUpload() {
         if (!resp.ok) {
             appendNotice(data.error || 'Upload failed.');
         } else {
+            msgInput.value = '';
             clearPreview();
         }
     } catch {
@@ -231,9 +234,11 @@ function appendImage(data) {
                 <button class="action-btn del-btn img-del-btn" title="Delete">&#10005;</button>
             </div>` : ''}
         </div>
-        <img class="chat-img" src="${data.image_url}" loading="lazy" alt="Image" />`;
+        <img class="chat-img" src="${data.image_url}" loading="lazy" alt="Image" />
+        ${data.caption ? `<div class="img-caption"></div>` : ''}`;
     const strong = art.querySelector('strong');
     strong.textContent = data.username;
+    if (data.caption) art.querySelector('.img-caption').textContent = data.caption;
     applyNameFont(strong);
     chatLog.appendChild(art);
     chatLog.scrollTop = chatLog.scrollHeight;

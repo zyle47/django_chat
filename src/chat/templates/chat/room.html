@@ -61,6 +61,7 @@
                             {% endif %}
                         </div>
                         <img class="chat-img" src="/chat/image/{{ item.id }}/" loading="lazy" alt="Image" />
+                        {% if item.caption %}<div class="img-caption">{{ item.caption }}</div>{% endif %}
                     </article>
                 {% endif %}
             {% empty %}
