@@ -235,6 +235,33 @@
         renderSeenIndicator();
     }
 
+    function scrollToFirstUnread(myLastReadAt) {
+        if (!myLastReadAt) {
+            dmLog.scrollTop = dmLog.scrollHeight;
+            return;
+        }
+        const cutoff = new Date(myLastReadAt).getTime();
+        if (Number.isNaN(cutoff)) {
+            dmLog.scrollTop = dmLog.scrollHeight;
+            return;
+        }
+        const theirs = dmLog.querySelectorAll('.dm-msg.theirs');
+        let firstUnread = null;
+        for (const el of theirs) {
+            const t = new Date(el.dataset.createdAt).getTime();
+            if (!Number.isNaN(t) && t > cutoff) { firstUnread = el; break; }
+        }
+        if (firstUnread) {
+            const divider = document.createElement('div');
+            divider.className = 'dm-new-divider';
+            divider.textContent = '/// new messages ///';
+            firstUnread.before(divider);
+            dmLog.scrollTop = firstUnread.offsetTop + firstUnread.offsetHeight - dmLog.clientHeight - 52;
+        } else {
+            dmLog.scrollTop = dmLog.scrollHeight;
+        }
+    }
+
     function renderSeenIndicator() {
         // Remove any existing tag.
         dmLog.querySelector('.dm-seen-tag')?.remove();
@@ -318,13 +345,14 @@
                 return;
             }
             peerLastReadAt = data.peer_last_read_at || null;
+            const myLastReadAt = data.my_last_read_at || null;
             dmLog.innerHTML = '';
             if (!data.messages.length) {
                 dmLog.innerHTML = '<div class="dm-empty">No messages yet — say hi.</div>';
             } else {
                 for (const m of data.messages) appendDmMessage(m);
                 renderSeenIndicator();
-                dmLog.scrollTop = dmLog.scrollHeight;
+                scrollToFirstUnread(myLastReadAt);
             }
         } catch {
             dmLog.innerHTML = '<div class="dm-empty">Failed to load.</div>';

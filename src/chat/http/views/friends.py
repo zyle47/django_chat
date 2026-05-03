@@ -112,6 +112,12 @@ def dm_history(request, peer_username):
         }
         for m in qs
     ]
+    my_read = (
+        DMRead.objects
+        .filter(user_id=request.user.id, peer_id=peer.id)
+        .values_list("last_read_at", flat=True)
+        .first()
+    )
     dm_svc.mark_read(request.user.id, peer.id)
     peer_read = (
         DMRead.objects
@@ -123,6 +129,7 @@ def dm_history(request, peer_username):
         "messages": items,
         "peer_username": peer.username,
         "peer_last_read_at": peer_read.isoformat() if peer_read else None,
+        "my_last_read_at": my_read.isoformat() if my_read else None,
     })
 
 
