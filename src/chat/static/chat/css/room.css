@@ -266,6 +266,33 @@ body {
     color: var(--muted); padding: 6px 0; letter-spacing: 0.04em;
 }
 
+.msg-whisper {
+    align-self: center;
+    max-width: 88%;
+    margin: 6px 0;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+    text-align: center;
+    background: rgba(0,245,255,0.04);
+    border: 1px dashed rgba(0,245,255,0.35);
+    color: var(--cyan);
+    text-shadow: 0 0 6px rgba(0,245,255,0.4);
+}
+.msg-whisper.kind-friend_request {
+    border-color: rgba(255,0,222,0.5);
+    background: rgba(255,0,222,0.05);
+    color: var(--pink);
+    text-shadow: 0 0 6px rgba(255,0,222,0.45);
+}
+.msg-whisper.kind-friend_accepted {
+    border-color: rgba(0,255,159,0.5);
+    background: rgba(0,255,159,0.05);
+    color: var(--green);
+    text-shadow: 0 0 6px rgba(0,255,159,0.45);
+}
+
 /* ── Image preview ── */
 .img-preview-bar {
     display: none; align-items: center; gap: 12px;
