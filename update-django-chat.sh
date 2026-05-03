@@ -13,6 +13,7 @@ LOCAL=$(git rev-parse @)
 REMOTE=$(git rev-parse @{u})
 
 if [ "$LOCAL" != "$REMOTE" ]; then
+    echo "********************************************************"
     echo "$(date) - New updates found. Pulling..."
     git pull origin master
 
@@ -24,13 +25,15 @@ if [ "$LOCAL" != "$REMOTE" ]; then
 
     # Apply Django migrations
     python manage.py migrate
-
+    sleep(1)
     # Restart Django service
     systemctl restart django-chat.service
 
     echo "$(date) - Update applied and service restarted."
     echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a $LOG_FILE
+    echo "********************************************************"
 else
     echo "$(date) - No updates."
     echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a $LOG_FILE
+    echo "********************************************************"
 fi
