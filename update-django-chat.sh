@@ -27,11 +27,11 @@ if [ "$LOCAL" != "$REMOTE" ]; then
     systemctl restart django-chat.service
 
     echo "$(date) - Update applied and service restarted."
-    echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a "$LOG_FILE"
+    echo "$(date) - Service status: $(systemctl is-active django-chat.service)"
     echo "********************************************************"
 else
     echo "********************************************************"
     echo "$(date) - No updates."
-    echo "$(date) - Service status: $(systemctl is-active django-chat.service)" | tee -a "$LOG_FILE"
+    echo "$(date) - Service status: $(systemctl is-active django-chat.service)"
     echo "********************************************************"
 fi
