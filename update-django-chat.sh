@@ -4,7 +4,6 @@ VENV=/home/zyle44/Documents/nemanja/.venv
 PROJECT=/home/zyle44/Documents/nemanja/django_chat
 SRC=$PROJECT/src
 REQUIREMENTS=/home/zyle44/Documents/nemanja/requirements.txt
-LOG_FILE=$PROJECT/update_log.txt
 
 cd "$PROJECT" || exit 1
 
