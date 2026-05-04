@@ -348,6 +348,11 @@ body {
     box-shadow: 0 0 22px rgba(0,245,255,0.18), 0 4px 16px rgba(0,0,0,0.5);
 }
 .room-card:active { transform: translateY(0); }
+.room-card.is-selected {
+    border-color: var(--cyan);
+    background: rgba(0,245,255,0.06);
+    box-shadow: 0 0 18px rgba(0,245,255,0.2);
+}
 .room-card.has-msgs {
     animation: room-pulse 2.2s ease-in-out infinite;
 }

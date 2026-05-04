@@ -170,18 +170,62 @@
         else if (action === 'unban') unbanFriend(name);
     });
 
+    const fwModal = document.getElementById('fw-modal');
+    const fwModalBox = fwModal?.querySelector('.fw-modal');
+    const fwModalTitle = document.getElementById('fw-modal-title');
+    const fwModalBody = document.getElementById('fw-modal-body');
+    const fwModalConfirm = document.getElementById('fw-modal-confirm');
+    const fwModalCancel = document.getElementById('fw-modal-cancel');
+    let _modalResolve = null;
+
+    function openFwModal(title, body, confirmText, confirmCls, safe) {
+        return new Promise(resolve => {
+            _modalResolve = resolve;
+            fwModalTitle.textContent = title;
+            fwModalBody.innerHTML = body;
+            fwModalConfirm.textContent = confirmText;
+            fwModalConfirm.className = 'friend-btn ' + confirmCls;
+            fwModalBox.classList.toggle('safe', !!safe);
+            fwModal.classList.add('open');
+        });
+    }
+
+    function closeFwModal(result) {
+        fwModal.classList.remove('open');
+        if (_modalResolve) { _modalResolve(result); _modalResolve = null; }
+    }
+
+    fwModalCancel.addEventListener('click', () => closeFwModal(false));
+    fwModalConfirm.addEventListener('click', () => closeFwModal(true));
+    fwModal.addEventListener('click', e => { if (e.target === fwModal) closeFwModal(false); });
+
     async function unbanFriend(name) {
-        if (!confirm(`Unban ${name}? They will be able to send you friend requests again.`)) return;
+        const ok = await openFwModal(
+            'Unban User',
+            `Unban <strong>${escapeText(name)}</strong>? They will be able to send you friend requests again.`,
+            'Unban', 'accept', true
+        );
+        if (!ok) return;
         await postFriendAction('unban', name);
     }
 
     async function removeFriend(name) {
-        if (!confirm(`Remove ${name} from friends? Your DM history with them will be deleted.`)) return;
+        const ok = await openFwModal(
+            'Remove Friend',
+            `Remove <strong>${escapeText(name)}</strong> from friends? Your DM history with them will be deleted.`,
+            'Remove', 'danger', false
+        );
+        if (!ok) return;
         await postFriendAction('remove', name);
     }
 
     async function banFriend(name) {
-        if (!confirm(`Ban ${name}? They will no longer be able to send you friend requests.`)) return;
+        const ok = await openFwModal(
+            'Ban User',
+            `Ban <strong>${escapeText(name)}</strong>? They will no longer be able to send you friend requests.`,
+            'Ban', 'danger', false
+        );
+        if (!ok) return;
         await postFriendAction('ban', name);
     }
 

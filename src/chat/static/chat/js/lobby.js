@@ -85,6 +85,19 @@ function hideRoomFields() {
     if (userLifetimeWrap) userLifetimeWrap.style.display = 'none';
 }
 
+function deselectRoom() {
+    selectedRoomHash = null;
+    requiredPwLength = 0;
+    roomList.querySelectorAll('.room-card.is-selected').forEach(c => c.classList.remove('is-selected'));
+    selectHint.style.display = '';
+    entryPanel.style.display = 'none';
+    entryPanel.classList.remove('field-revealed');
+    if (roomPassInput) roomPassInput.value = '';
+    if (roomNameInput) roomNameInput.value = '';
+    if (fingerprintEl) { fingerprintEl.textContent = ''; fingerprintEl.classList.remove('has-value'); }
+    if (selectedFpEl) selectedFpEl.textContent = '';
+}
+
 document.querySelectorAll('.lifetime-chips').forEach(group => {
     const target = document.getElementById(group.dataset.target);
     group.addEventListener('click', e => {
@@ -103,6 +116,12 @@ if (roomPassInput) {
             : roomPassInput.value.length > 0;
         submitWrap.style.display = matches ? '' : 'none';
     });
+
+    roomPassInput.closest('form')?.addEventListener('submit', e => {
+        const len = roomPassInput.value.length;
+        const valid = requiredPwLength > 0 ? len === requiredPwLength : len > 0;
+        if (!valid) e.preventDefault();
+    });
 }
 
 function showEntryPanel() {
@@ -116,6 +135,7 @@ function showEntryPanel() {
 const createRoomBtn = document.getElementById('create-room-btn');
 if (createRoomBtn) {
     createRoomBtn.addEventListener('click', () => {
+        roomList.querySelectorAll('.room-card.is-selected').forEach(c => c.classList.remove('is-selected'));
         selectedRoomHash = null;
         requiredPwLength = 0;
         roomNameInput.value = '';
@@ -149,6 +169,12 @@ if (adminCreateInput) {
 roomList.addEventListener('click', e => {
     const btn = e.target.closest('.room-pill-btn');
     if (!btn) return;
+    if (btn.dataset.roomHash === selectedRoomHash) {
+        deselectRoom();
+        return;
+    }
+    roomList.querySelectorAll('.room-card.is-selected').forEach(c => c.classList.remove('is-selected'));
+    btn.classList.add('is-selected');
     selectedRoomHash = btn.dataset.roomHash;
     requiredPwLength = pwLengths[selectedRoomHash] || 0;
     showEntryPanel();

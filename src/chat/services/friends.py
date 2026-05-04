@@ -199,11 +199,13 @@ def unban_friend(actor_id: int, peer_username: str):
         return {"ok": False, "code": "no_such_user"}
     if peer.id == actor_id:
         return {"ok": False, "code": "self"}
-    deleted, _ = FriendBlock.objects.filter(
-        blocker_id=actor_id, blocked_id=peer.id
-    ).delete()
-    if deleted == 0:
-        return {"ok": False, "code": "not_banned", "peer_username": peer.username}
+    with transaction.atomic():
+        deleted, _ = FriendBlock.objects.filter(
+            blocker_id=actor_id, blocked_id=peer.id
+        ).delete()
+        if deleted == 0:
+            return {"ok": False, "code": "not_banned", "peer_username": peer.username}
+        Friendship.create_between(actor_id, peer.id)
     return {
         "ok": True,
         "code": "unbanned",
