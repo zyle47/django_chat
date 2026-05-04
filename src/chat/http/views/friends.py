@@ -132,6 +132,8 @@ def unban_friend(request):
     if not name:
         return HttpResponseBadRequest("missing username")
     result = friend_svc.unban_friend(request.user.id, name)
+    if result.get("ok"):
+        publish_friends_changed()
     return JsonResponse(result, status=200 if result.get("ok") else 400)
 
 

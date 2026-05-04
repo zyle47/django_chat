@@ -18,6 +18,7 @@ from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
 from chat.services.realtime import publish_room_activity
 from chat.services.room_access import grant_room_access, has_room_access
 from chat.services.room_colors import room_color_for_username
+from chat.services.room_display import room_display as _room_display
 
 
 def _is_valid_image(f):
@@ -90,11 +91,14 @@ def room(request, public_id):
         })
     items.sort(key=lambda x: x["time"])
 
+    disp = _room_display(room_obj.name)
     context = {
         "room_name": room_obj.name,
         "public_id": room_obj.public_id,
         "items": items,
         "username": request.user.username,
+        "room_icon": disp["icon"],
+        "room_color": disp["color"],
     }
     return render(request, "chat/room.html", context)
 

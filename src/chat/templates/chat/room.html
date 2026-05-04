@@ -10,14 +10,9 @@
 <body>
     <main class="layout">
         <header class="head">
-            <div class="head-info">
-                <div class="room-avatar">{{ room_name|slice:":1"|upper }}</div>
-                <div class="room-meta">
-                    <h1>{{ room_name }}</h1>
-                    <div class="you"><span class="user-badge">&#9632;&nbsp;<strong>{{ username }}</strong></span></div>
-                </div>
-            </div>
             <a class="btn-back" href="/">&larr; Lobby</a>
+            <div class="room-avatar" style="background:{{ room_color }};">{{ room_icon }}</div>
+            <div class="head-user"><span class="user-badge">&#9632;&nbsp;<strong>{{ username }}</strong></span></div>
         </header>
 
         <section id="chat-log">
