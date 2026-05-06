@@ -1,0 +1,8 @@
+SocksPort 0
+DataDirectory /var/lib/tor
+HiddenServiceDir /var/lib/tor/django_chat
+HiddenServicePort 80 django-chat:8000
+Log notice stdout
+User tor
+ControlPort 9051
+CookieAuthentication 0

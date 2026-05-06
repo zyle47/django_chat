@@ -1,0 +1,28 @@
+services:
+  django-chat:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./src:/app
+    env_file: .env
+    networks:
+      - internal
+
+  tor:
+    build: ./tor
+    restart: unless-stopped
+    volumes:
+      - ./tor-data:/var/lib/tor/django_chat
+    depends_on:
+      - django-chat
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "sh", "-c", "printf 'AUTHENTICATE\\r\\nGETINFO status/bootstrap-phase\\r\\nQUIT\\r\\n' | nc 127.0.0.1 9051 | grep -q 'PROGRESS=100'"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+networks:
+  internal:

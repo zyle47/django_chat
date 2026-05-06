@@ -1,0 +1,4 @@
+.git/
+.env
+update_log.txt
+src/

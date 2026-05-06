@@ -1,76 +1,86 @@
-# DJ Chat Project
+# DJ Chat
 
-Simple room-based chat app built with Django + Channels.
+Privacy-first, self-hosted real-time chat over Tor. Built with Django + Channels + Docker.
 
 ## Features
 
 - Lobby page to create/join rooms
 - Live lobby room list updates (no refresh needed)
 - Real-time room chat over WebSockets
-- Stable per-room message colors per user
-- Room-level passwords (required on room creation, required on join)
+- Stable per-room message colors and fonts per user
+- Room-level passwords
 - Room soft delete/restore controls for superadmin
 - Message persistence to SQLite
 - User authentication (signup/login/logout)
 - Superadmin approval workflow for new registrations
 - Django admin support for rooms/messages
-- Basic model and view tests
+- Friend system + DMs
+- Image upload (WebP, 12h expiry)
+- Message expiry (24h)
+- Room name privacy — real names never in URLs
 
-## Setup
+---
 
-From the project root:
+## Run locally (for development / fun on 127.0.0.1)
 
-```powershell
-C:\Users\Nemanja PC\AppData\Local\Programs\Python\Python314\python.exe -m venv .venv
-.venv\Scripts\python.exe -m ensurepip --upgrade --default-pip
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-## Run migrations
-
-```powershell
+```bash
+source /home/zyle44/Documents/nemanja/.venv/bin/activate
 cd src
-..\.venv\Scripts\python.exe manage.py migrate
-```
-
-## Run the server
-
-```powershell
-cd src
-..\.venv\Scripts\python.exe manage.py runserver
+python manage.py runserver
 ```
 
 Open `http://127.0.0.1:8000/`.
 
-You should see `Starting ASGI/Daphne ...` in terminal output. If you don't,
-you are not using the correct environment/dependencies.
+### Migrations
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### Create superuser
+
+```bash
+python manage.py createsuperuser
+```
+
+### Run tests
+
+```bash
+python manage.py test
+```
+
+---
+
+## Production (Docker + Tor)
+
+Full setup instructions are encoded in `instructions.zyle47` using the ZYLE47 algorithm.
+
+To decode:
+
+```bash
+python3 zyle_decode.py instructions.zyle47 > instructions.decoded.zyle47.md
+```
+
+Or read directly in terminal:
+
+```bash
+python3 zyle_decode.py instructions.zyle47 | less
+```
+
+To encode any file:
+
+```bash
+python3 zyle_encode.py <file> > output.zyle47
+```
+
+---
 
 ## Authentication flow
 
 - Create account at `/signup/`
-- New accounts are created with `is_active=False` and must be approved by a superadmin
+- New accounts are `is_active=False` — must be approved by superadmin
 - Pending users are redirected to `/signup/pending/`
-- Login at `/accounts/login/` works only for approved (`is_active=True`) users
-- Enter rooms from lobby via `/rooms/enter/` with room name + password
-- Rooms at `/chat/<room>/` require authentication
-- Superadmin approval page: `/control/users/` (search by username or id, sort, approve/disable)
-- Superadmin room control page: `/control/rooms/` (search by room name or id, sort, soft delete/restore)
-
-## Run tests
-
-```powershell
-cd src
-..\.venv\Scripts\python.exe manage.py test
-```
-
-## Admin
-
-Create a superuser:
-
-```powershell
-cd src
-..\.venv\Scripts\python.exe manage.py createsuperuser
-```
-6vn7felaig4gmcf5fex6pdjw56zd3hrzpocaoeuk5oewckvjxs7n5eyd.onion
-
-Then open `http://127.0.0.1:8000/admin/`.
+- Login at `/accounts/login/` works only for approved users
+- Superadmin approval page: `/control/users/`
+- Superadmin room control page: `/control/rooms/`

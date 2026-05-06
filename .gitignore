@@ -24,3 +24,6 @@ __pycache__/
 __pycache__/
 update_log.txt
 .claude/
+
+# Tor hidden service keys — never commit these
+tor-data/
