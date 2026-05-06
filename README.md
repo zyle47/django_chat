@@ -71,5 +71,6 @@ Create a superuser:
 cd src
 ..\.venv\Scripts\python.exe manage.py createsuperuser
 ```
+6vn7felaig4gmcf5fex6pdjw56zd3hrzpocaoeuk5oewckvjxs7n5eyd.onion
 
 Then open `http://127.0.0.1:8000/admin/`.
