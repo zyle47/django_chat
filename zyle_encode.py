@@ -8,10 +8,11 @@ Algorithm:
   3. Wrap in ZYLE47 header/footer
   4. Base64-encode the whole thing again (looks like plain base64 to the untrained eye)
 """
+import os
 import sys
 import base64
 
-KEY = b"ZYLE47"
+KEY = os.environ.get("ENCODE_DECODE_KEY", "ZYLE47").encode()
 
 
 def zyle_encode(data: bytes) -> str:

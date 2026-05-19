@@ -8,10 +8,11 @@ Algorithm (reverse of zyle_encode):
   3. Base64-decode the inner layer
   4. XOR every byte with repeating key b"ZYLE47"
 """
+import os
 import sys
 import base64
 
-KEY = b"ZYLE47"
+KEY = os.environ.get("ENCODE_DECODE_KEY", "ZYLE47").encode()
 
 
 def zyle_decode(text: str) -> bytes:
