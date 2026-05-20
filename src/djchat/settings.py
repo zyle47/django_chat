@@ -13,7 +13,7 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 _onion_host = os.getenv('ONION_HOST', '')
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '10.0.2.2']
 if _onion_host:
     ALLOWED_HOSTS.append(_onion_host)
 

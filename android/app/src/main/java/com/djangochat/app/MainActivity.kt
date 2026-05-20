@@ -1,8 +1,13 @@
 package com.djangochat.app
 
 import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.webkit.*
@@ -11,7 +16,8 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import info.guardianproject.netcipher.proxy.OrbotHelper
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import info.guardianproject.netcipher.webkit.WebkitProxy
 
 class MainActivity : AppCompatActivity() {
@@ -19,6 +25,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private lateinit var statusText: TextView
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    private var receiverRegistered = false
+
+    private val torStatusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val status = intent.getStringExtra("org.torproject.android.intent.extra.STATUS") ?: return
+            when (status) {
+                "ON" -> runOnUiThread { connectAndLoad() }
+                "STARTING" -> runOnUiThread {
+                    statusText.text = "Connecting to Tor…"
+                    statusText.visibility = View.VISIBLE
+                }
+                "OFF" -> runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Orbot stopped", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     private val filePickerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -36,8 +59,21 @@ class MainActivity : AppCompatActivity() {
         webView = findViewById(R.id.webView)
         statusText = findViewById(R.id.statusText)
 
+        ViewCompat.setOnApplyWindowInsetsListener(webView.parent as View) { v, insets ->
+            val bars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            WindowInsetsCompat.CONSUMED
+        }
+
         setupWebView()
-        initOrbot()
+        if (BuildConfig.USE_TOR) {
+            initOrbot()
+        } else {
+            statusText.visibility = View.GONE
+            webView.loadUrl(BuildConfig.BASE_URL)
+        }
     }
 
     private fun setupWebView() {
@@ -47,6 +83,8 @@ class MainActivity : AppCompatActivity() {
             databaseEnabled = true
             allowFileAccess = false
             allowContentAccess = false
+            useWideViewPort = true
+            loadWithOverviewMode = true
             setSupportZoom(false)
             builtInZoomControls = false
         }
@@ -81,8 +119,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isOrbotInstalled(): Boolean {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getPackageInfo("org.torproject.android", PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo("org.torproject.android", 0)
+            }
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
+        }
+    }
+
     private fun initOrbot() {
-        if (!OrbotHelper.isOrbotInstalled(this)) {
+        if (!isOrbotInstalled()) {
             AlertDialog.Builder(this)
                 .setTitle("Orbot required")
                 .setMessage("This app connects over Tor and requires Orbot. Install it to continue.")
@@ -104,45 +156,40 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        OrbotHelper.get(this).init(this)
-        OrbotHelper.get(this).addStatusCallback(object : OrbotHelper.StatusCallback {
-            override fun onEnabled(intent: Intent?) {
-                runOnUiThread { connectAndLoad() }
-            }
+        val filter = IntentFilter("org.torproject.android.intent.action.STATUS")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(torStatusReceiver, filter, RECEIVER_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(torStatusReceiver, filter)
+        }
+        receiverRegistered = true
 
-            override fun onStarting() {
-                runOnUiThread {
-                    statusText.text = "Connecting to Tor…"
-                    statusText.visibility = View.VISIBLE
-                }
-            }
+        statusText.text = "Connecting to Tor…"
+        statusText.visibility = View.VISIBLE
 
-            override fun onStopped() {
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Orbot stopped", Toast.LENGTH_SHORT).show()
-                }
+        val startIntent = Intent("org.torproject.android.intent.action.START")
+        startIntent.setPackage("org.torproject.android")
+        startIntent.putExtra("org.torproject.android.intent.extra.PACKAGE_NAME", packageName)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(startIntent)
+            } else {
+                startService(startIntent)
             }
-
-            override fun onStatusTimeout() {
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Tor connection timed out, retrying…", Toast.LENGTH_SHORT).show()
-                    OrbotHelper.requestStartTor(this@MainActivity)
-                }
+        } catch (_: Exception) {
+            try {
+                startActivity(startIntent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Could not start Orbot: ${e.message}", Toast.LENGTH_LONG).show()
             }
-
-            override fun onNotYetInstalled() {
-                runOnUiThread { finish() }
-            }
-        })
-
-        if (OrbotHelper.isOrbotRunning(this)) connectAndLoad()
-        else OrbotHelper.requestStartTor(this)
+        }
     }
 
     private fun connectAndLoad() {
         try {
-            WebkitProxy.setProxy(applicationContext, "127.0.0.1", 8118)
-            webView.loadUrl(BuildConfig.ONION_URL)
+            WebkitProxy.setProxy(applicationContext.packageName, applicationContext, webView, "127.0.0.1", 8118)
+            webView.loadUrl(BuildConfig.BASE_URL)
         } catch (e: Exception) {
             Toast.makeText(this, "Proxy error: ${e.message}", Toast.LENGTH_LONG).show()
         }
@@ -167,7 +214,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        OrbotHelper.get(this).removeStatusCallback(null)
+        if (receiverRegistered) {
+            unregisterReceiver(torStatusReceiver)
+            receiverRegistered = false
+        }
         super.onDestroy()
     }
 }

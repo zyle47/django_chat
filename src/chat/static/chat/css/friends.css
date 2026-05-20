@@ -73,7 +73,7 @@
     position: absolute;
     right: 0;
     bottom: 66px;
-    width: 420px;
+    width: min(420px, calc(100vw - 56px));
     max-height: min(70vh, 520px);
     background: #0b0b1e;
     border: 1px solid rgba(0,245,255,0.25);
@@ -489,3 +489,19 @@
 .fw-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
 .fw-modal-cancel { color: #3d6b7a; border-color: rgba(255,255,255,0.12); }
 .fw-modal-cancel:hover:not(:disabled) { color: #cce8ff; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.04); }
+
+@media (max-width: 480px) {
+    .friends-widget { right: 12px; bottom: 12px; }
+    .friends-panel {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 78px;
+        top: auto;
+        width: auto;
+        max-height: calc(100vh - 90px);
+    }
+    .dm-view { height: calc(100vh - 90px); }
+    .dm-composer input,
+    .dm-edit-input { min-width: 0; }
+}
