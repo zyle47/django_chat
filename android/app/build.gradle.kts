@@ -24,6 +24,11 @@ android {
             buildConfigField("Boolean", "USE_TOR", "false")
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8000\"")
         }
+        create("debugTor") {
+            initWith(getByName("debug"))
+            buildConfigField("Boolean", "USE_TOR", "true")
+            buildConfigField("String", "BASE_URL", "\"http://6vn7felaig4gmcf5fex6pdjw56zd3hrzpocaoeuk5oewckvjxs7n5eyd.onion\"")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

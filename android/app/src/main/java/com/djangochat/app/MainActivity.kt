@@ -184,6 +184,13 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Could not start Orbot: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
+
+        // If Orbot is already running it won't re-broadcast ON — try the proxy immediately.
+        webView.postDelayed({
+            if (statusText.visibility == View.VISIBLE) {
+                connectAndLoad()
+            }
+        }, 1500)
     }
 
     private fun connectAndLoad() {
