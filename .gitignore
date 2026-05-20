@@ -27,3 +27,4 @@ update_log.txt
 
 # Tor hidden service keys — never commit these
 tor-data/
+.dockerignore
