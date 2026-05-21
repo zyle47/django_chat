@@ -141,6 +141,10 @@ Tor and Caddy don't conflict: tor publishes onion → django-chat:8000, Caddy pu
 
 ## 3. Android: configure `USE_TOR` / `BASE_URL`
 
+> **Dev workflow:** Android Studio lives on your Windows PC, not the server.
+> Push your branch here, pull it on Windows, and build/test there.
+> The server only needs Docker + Tor — no Android tooling required on the host.
+
 Build-time flags live in [android/app/build.gradle.kts](android/app/build.gradle.kts) under `buildTypes`.
 
 | Build type | `USE_TOR` | `BASE_URL` | Used for |
