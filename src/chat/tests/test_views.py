@@ -8,15 +8,20 @@ from chat.models import ChatRoom
 
 class TestChatViews(TestCase):
     def test_index_page_renders(self):
+        user = User.objects.create_user(username="testuser", password="Pass123", is_active=True)
+        self.client.force_login(user)
         response = self.client.get(reverse("index"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "chat/index.html")
-        self.assertContains(response, "Welcome to the Chat Platform")
-        self.assertNotContains(response, "Existing rooms")
-        self.assertNotContains(response, "room-name-input")
+        self.assertContains(response, "room-name-input")
+
+    def test_index_page_requires_login(self):
+        response = self.client.get(reverse("index"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response.url)
 
     def test_room_page_requires_login(self):
-        response = self.client.get(reverse("room", kwargs={"room_name": "general"}))
+        response = self.client.get(reverse("room", kwargs={"public_id": "fakehash123"}))
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
 
@@ -29,14 +34,13 @@ class TestChatViews(TestCase):
             {"room_name": "general", "room_password": "TopSecret123"},
         )
         self.assertEqual(enter_response.status_code, 302)
-        self.assertEqual(enter_response.url, reverse("room", kwargs={"room_name": "general"}))
 
         room_obj = ChatRoom.objects.get(name="general")
         self.assertTrue(room_obj.check_password("TopSecret123"))
+        self.assertEqual(enter_response.url, reverse("room", kwargs={"public_id": room_obj.public_id}))
 
-        room_response = self.client.get(reverse("room", kwargs={"room_name": "general"}))
+        room_response = self.client.get(reverse("room", kwargs={"public_id": room_obj.public_id}))
         self.assertEqual(room_response.status_code, 200)
-        self.assertContains(room_response, "Room: general")
         self.assertContains(room_response, "nemanja")
 
     def test_enter_existing_room_requires_correct_password(self):
@@ -54,7 +58,10 @@ class TestChatViews(TestCase):
         self.assertEqual(bad_response.status_code, 200)
         self.assertContains(bad_response, "Invalid room password.")
 
-        room_response = self.client.get(reverse("room", kwargs={"room_name": "support"}), follow=True)
+        room_response = self.client.get(
+            reverse("room", kwargs={"public_id": room_obj.public_id}),
+            follow=True,
+        )
         self.assertEqual(room_response.status_code, 200)
         self.assertContains(room_response, "Enter room password from the lobby to access this room.")
 
@@ -62,8 +69,8 @@ class TestChatViews(TestCase):
         user = User.objects.create_user(username="member", password="Password123")
         self.client.force_login(user)
         response = self.client.get(reverse("index"))
-        self.assertContains(response, "Existing rooms")
         self.assertContains(response, "room-name-input")
+        self.assertContains(response, "room-search")
 
     def test_signup_creates_inactive_user_and_redirects_pending(self):
         response = self.client.post(

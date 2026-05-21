@@ -1,6 +1,6 @@
 # DJ Chat
 
-Privacy-first, self-hosted real-time chat over Tor. Built with Django + Channels + Docker.
+Privacy-first, self-hosted real-time chat over Tor. Built with Django + Channels + Docker. CI/CD test
 
 ## Features
 
