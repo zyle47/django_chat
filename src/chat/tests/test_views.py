@@ -1,9 +1,12 @@
+import json
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from chat.http.views.auth import SIGNUP_PENDING_SESSION_KEY
-from chat.models import ChatRoom
+from chat.models import ChatMessage, ChatRoom
 
 
 class TestChatViews(TestCase):
@@ -128,3 +131,77 @@ class TestChatViews(TestCase):
             },
         )
         self.assertTrue(self.client.session.get(SIGNUP_PENDING_SESSION_KEY))
+
+    def test_authenticated_user_visiting_signup_redirects_to_index(self):
+        user = User.objects.create_user(username="loggedin", password="Pass123", is_active=True)
+        self.client.force_login(user)
+        response = self.client.get(reverse("signup"))
+        self.assertRedirects(response, reverse("index"))
+
+    def test_enter_room_with_empty_name_shows_error(self):
+        user = User.objects.create_user(username="alice", password="Pass123", is_active=True)
+        self.client.force_login(user)
+        response = self.client.post(
+            reverse("enter-room"),
+            {"room_name": "   ", "room_password": ""},
+            follow=True,
+        )
+        self.assertContains(response, "Please enter a valid room name.")
+
+    def test_enter_room_new_room_without_password_shows_error(self):
+        user = User.objects.create_user(username="alice", password="Pass123", is_active=True)
+        self.client.force_login(user)
+        response = self.client.post(
+            reverse("enter-room"),
+            {"room_name": "brandnew", "room_password": ""},
+            follow=True,
+        )
+        self.assertContains(response, "New rooms must have a password.")
+        self.assertFalse(ChatRoom.objects.filter(name="brandnew").exists())
+
+    def test_enter_room_deleted_room_shows_error(self):
+        user = User.objects.create_user(username="alice", password="Pass123", is_active=True)
+        self.client.force_login(user)
+        room = ChatRoom.objects.create(name="zombie")
+        room.soft_delete()
+        room.save(update_fields=["is_deleted", "deleted_at"])
+
+        response = self.client.post(
+            reverse("enter-room"),
+            {"room_name": "zombie", "room_password": "anything"},
+            follow=True,
+        )
+        self.assertContains(response, "This room is currently unavailable.")
+
+
+class TestRoomUnreadStateView(TestCase):
+    def test_requires_login(self):
+        response = self.client.get(reverse("api-room-unread", kwargs={"public_id": "a" * 64}))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response.url)
+
+    def test_nonexistent_room_returns_unread_false(self):
+        user = User.objects.create_user(username="alice", password="Pass123", is_active=True)
+        self.client.force_login(user)
+        response = self.client.get(reverse("api-room-unread", kwargs={"public_id": "a" * 64}))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(json.loads(response.content)["unread"])
+
+    def test_room_with_no_messages_returns_unread_false(self):
+        user = User.objects.create_user(username="alice", password="Pass123", is_active=True)
+        self.client.force_login(user)
+        room = ChatRoom.objects.create(name="emptyroom")
+        response = self.client.get(reverse("api-room-unread", kwargs={"public_id": room.public_id}))
+        self.assertFalse(json.loads(response.content)["unread"])
+
+    def test_room_with_unread_message_returns_unread_true(self):
+        user = User.objects.create_user(username="alice", password="Pass123", is_active=True)
+        other = User.objects.create_user(username="bob", password="Pass123", is_active=True)
+        self.client.force_login(user)
+        room = ChatRoom.objects.create(name="chatroom")
+        ChatMessage.objects.create(
+            room=room, user=other, username="bob", message="hey",
+            expires_at=timezone.now() + timezone.timedelta(hours=1),
+        )
+        response = self.client.get(reverse("api-room-unread", kwargs={"public_id": room.public_id}))
+        self.assertTrue(json.loads(response.content)["unread"])

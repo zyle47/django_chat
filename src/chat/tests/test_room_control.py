@@ -47,3 +47,34 @@ class TestRoomControlViews(TestCase):
         room.refresh_from_db()
         self.assertFalse(room.is_deleted)
         self.assertIsNone(room.deleted_at)
+
+    def test_room_control_unauthenticated_redirects_to_login(self):
+        response = self.client.get(reverse("admin-room-control-list"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response.url)
+
+    def test_superadmin_can_permanently_delete_soft_deleted_room(self):
+        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        room = ChatRoom.objects.create(name="deadroom")
+        room.soft_delete()
+        room.save(update_fields=["is_deleted", "deleted_at"])
+
+        self.client.force_login(superadmin)
+        response = self.client.post(
+            reverse("admin-room-delete", kwargs={"room_id": room.id}),
+            {"redirect_query": "", "redirect_sort": "-created_at"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(ChatRoom.objects.filter(id=room.id).exists())
+
+    def test_superadmin_cannot_permanently_delete_active_room(self):
+        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        room = ChatRoom.objects.create(name="alive")
+
+        self.client.force_login(superadmin)
+        response = self.client.post(
+            reverse("admin-room-delete", kwargs={"room_id": room.id}),
+            {"redirect_query": "", "redirect_sort": "-created_at"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(ChatRoom.objects.filter(id=room.id).exists())

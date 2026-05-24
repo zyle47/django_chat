@@ -49,3 +49,32 @@ class TestUserApprovalViews(TestCase):
         self.assertEqual(response.status_code, 302)
         superadmin.refresh_from_db()
         self.assertTrue(superadmin.is_active)
+
+    def test_user_approval_unauthenticated_redirects_to_login(self):
+        response = self.client.get(reverse("admin-user-approval-list"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/accounts/login/", response.url)
+
+    def test_superadmin_can_permanently_delete_regular_user(self):
+        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        target = User.objects.create_user(username="victim", password="StrongPass123", is_active=False)
+
+        self.client.force_login(superadmin)
+        response = self.client.post(
+            reverse("admin-user-delete", kwargs={"user_id": target.id}),
+            {"redirect_query": "", "redirect_sort": "-date_joined"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(User.objects.filter(id=target.id).exists())
+
+    def test_superadmin_cannot_delete_another_superadmin(self):
+        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        other_super = User.objects.create_superuser(username="root2", password="StrongPass123", email="root2@test.com")
+
+        self.client.force_login(superadmin)
+        response = self.client.post(
+            reverse("admin-user-delete", kwargs={"user_id": other_super.id}),
+            {"redirect_query": "", "redirect_sort": "-date_joined"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(id=other_super.id).exists())

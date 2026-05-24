@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history required for diff-cover
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -24,7 +26,7 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt -r requirements-test.txt
 
       - name: Check for missing migrations
         working-directory: src
@@ -33,9 +35,27 @@ jobs:
           DEBUG: 'True'
         run: python manage.py makemigrations --check --dry-run
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: src
         env:
           SECRET_KEY: ci-dummy-key
           DEBUG: 'True'
-        run: python manage.py test chat --verbosity=2
+        run: |
+          coverage run manage.py test chat --verbosity=2
+          coverage xml -o ../coverage.xml
+
+      - name: Resolve compare ref
+        id: compare
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=origin/${{ github.base_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=$(git rev-parse HEAD~1 2>/dev/null || echo HEAD)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check diff coverage
+        run: |
+          diff-cover coverage.xml \
+            --compare-branch=${{ steps.compare.outputs.ref }} \
+            --src-roots=src \
+            --fail-under=80
