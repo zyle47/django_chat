@@ -1,1 +1,0 @@
--keep class info.guardianproject.** { *; }
