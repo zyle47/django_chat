@@ -4,7 +4,14 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
-from chat.models import ChatMessage, ChatRoom, DirectMessage, Friendship
+from chat.models import (
+    ChatMessage,
+    ChatRoom,
+    DirectMessage,
+    FriendBlock,
+    Friendship,
+    UserRoomRead,
+)
 
 
 class TestChatRoomModel(TestCase):
@@ -90,8 +97,49 @@ class TestFriendshipModel(TestCase):
         Friendship.create_between(alice.id, bob.id)
         self.assertTrue(Friendship.exists_between(bob.id, alice.id))
 
+    def test_str(self):
+        alice = User.objects.create_user(username="alice", password="Pass123")
+        bob = User.objects.create_user(username="bob", password="Pass123")
+        friendship = Friendship.create_between(alice.id, bob.id)
+        self.assertIn(str(friendship.user_low_id), str(friendship))
+        self.assertIn(str(friendship.user_high_id), str(friendship))
+
+
+class TestFriendBlockModel(TestCase):
+    def test_str(self):
+        alice = User.objects.create_user(username="alice", password="Pass123")
+        bob = User.objects.create_user(username="bob", password="Pass123")
+        block = FriendBlock.objects.create(blocker=alice, blocked=bob)
+        self.assertIn(str(alice.id), str(block))
+        self.assertIn(str(bob.id), str(block))
+
+
+class TestUserRoomReadModel(TestCase):
+    def test_str(self):
+        room = ChatRoom.objects.create(name="myroom")
+        user = User.objects.create_user(username="alice", password="Pass123")
+        from django.utils import timezone
+
+        read = UserRoomRead.objects.create(
+            user=user, room=room, last_read_at=timezone.now()
+        )
+        self.assertIn(str(user.id), str(read))
+        self.assertIn(str(room.id), str(read))
+
 
 class TestDirectMessageModel(TestCase):
+    def test_str(self):
+        alice = User.objects.create_user(username="alice", password="Pass123")
+        bob = User.objects.create_user(username="bob", password="Pass123")
+        dm = DirectMessage.objects.create(
+            from_user=alice,
+            to_user=bob,
+            message="hi",
+            expires_at=timezone.now() + timezone.timedelta(hours=1),
+        )
+        self.assertIn(str(alice.id), str(dm))
+        self.assertIn(str(bob.id), str(dm))
+
     def test_pair_low_high_auto_set_on_save(self):
         alice = User.objects.create_user(username="alice", password="Pass123")
         bob = User.objects.create_user(username="bob", password="Pass123")
