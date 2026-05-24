@@ -28,11 +28,3 @@ update_log.txt
 # Tor hidden service keys — never commit these
 tor-data/
 .dockerignore
-
-# Android
-android/.gradle/
-android/build/
-android/app/build/
-android/local.properties
-android/*.iml
-android/.idea/
