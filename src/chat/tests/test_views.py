@@ -245,3 +245,23 @@ class TestRoomUnreadStateView(TestCase):
             reverse("api-room-unread", kwargs={"public_id": room.public_id})
         )
         self.assertTrue(json.loads(response.content)["unread"])
+
+
+class TestIndexHourlyStats(TestCase):
+    def test_index_with_recent_messages_populates_hourly_slots(self):
+        user = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        room = ChatRoom.objects.create(name="statsroom")
+        ChatMessage.objects.create(
+            room=room,
+            username="alice",
+            message="hi",
+            expires_at=timezone.now() + timezone.timedelta(hours=1),
+        )
+        self.client.force_login(user)
+        response = self.client.get(reverse("index"))
+        self.assertEqual(response.status_code, 200)
+        stats = response.context["stats"]
+        self.assertGreater(stats["messages_total"], 0)
+        self.assertTrue(any(s > 0 for s in stats["hourly"]))
