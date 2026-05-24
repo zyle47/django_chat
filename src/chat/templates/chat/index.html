@@ -58,6 +58,10 @@
                         <form method="post" action="/rooms/enter/">
                             {% csrf_token %}
                             <input type="hidden" id="room-name-input" name="room_name" />
+                            <div class="form-field" id="admin-password-wrap" style="display:none;">
+                                <label for="admin-password-input">Password</label>
+                                <input id="admin-password-input" name="room_password" type="password" maxlength="128" placeholder="Required" />
+                            </div>
                             <div class="lifetime-wrap" id="admin-lifetime-wrap" style="display:none;">
                                 <div class="panel-label">// Message Lifetime</div>
                                 <div class="lifetime-chips" data-target="admin-lifetime-input">

@@ -178,6 +178,19 @@ class TestChatViews(TestCase):
         self.assertContains(response, "New rooms must have a password.")
         self.assertFalse(ChatRoom.objects.filter(name="brandnew").exists())
 
+    def test_superuser_creating_room_without_password_shows_error(self):
+        admin = User.objects.create_superuser(
+            username="admin", password="Admin123", email="admin@example.com"
+        )
+        self.client.force_login(admin)
+        response = self.client.post(
+            reverse("enter-room"),
+            {"room_name": "adminroom", "room_password": ""},
+            follow=True,
+        )
+        self.assertContains(response, "New rooms must have a password.")
+        self.assertFalse(ChatRoom.objects.filter(name="adminroom").exists())
+
     def test_enter_room_deleted_room_shows_error(self):
         user = User.objects.create_user(
             username="alice", password="Pass123", is_active=True
