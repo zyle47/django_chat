@@ -39,5 +39,11 @@ else
     echo "********************************************************"
     echo "$(date) - No updates."
     echo "$(date) - Container status: $(docker compose ps --format '{{.State}}' django-chat 2>/dev/null || echo unknown)"
+    sleep 5
+    docker compose down
+    docker compose up -d
+    sleep 5
+    echo "$(date) - Container restarted."
+    echo "$(date) - Container status: $(docker compose ps --format '{{.State}}' django-chat 2>/dev/null || echo unknown)"
     echo "********************************************************"
 fi
