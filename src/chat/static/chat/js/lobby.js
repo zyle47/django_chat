@@ -144,8 +144,12 @@ if (createRoomBtn) {
             adminRoomNameEl.style.display = 'none';
             const adminCreateWrap = document.getElementById('admin-create-wrap');
             const adminCreateInput = document.getElementById('admin-create-input');
+            const adminPasswordWrap = document.getElementById('admin-password-wrap');
+            const adminPasswordInput = document.getElementById('admin-password-input');
             adminCreateWrap.style.display = '';
             adminCreateInput.value = '';
+            adminPasswordWrap.style.display = '';
+            adminPasswordInput.value = '';
             adminCreateInput.focus();
             if (adminLifetimeWrap) adminLifetimeWrap.style.display = '';
         } else {
@@ -180,9 +184,13 @@ roomList.addEventListener('click', e => {
     showEntryPanel();
     if (IS_SUPERUSER) {
         const name = btn.dataset.roomName;
+        const adminPasswordWrap = document.getElementById('admin-password-wrap');
+        const adminPasswordInput = document.getElementById('admin-password-input');
         adminRoomNameEl.textContent = name;
         adminRoomNameEl.style.display = 'block';
         document.getElementById('admin-create-wrap').style.display = 'none';
+        adminPasswordWrap.style.display = 'none';
+        adminPasswordInput.value = '';
         if (adminLifetimeWrap) adminLifetimeWrap.style.display = 'none';
         roomNameInput.value = name;
     } else {

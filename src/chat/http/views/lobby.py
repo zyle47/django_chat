@@ -9,9 +9,9 @@ from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.text import slugify
 from django.views.decorators.http import require_GET, require_POST
 
+from chat.forms import EnterRoomForm
 from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats, UserRoomRead
 from chat.services.rate_limit import is_rate_limited
 from chat.services.room_access import grant_room_access
@@ -88,26 +88,26 @@ def index(request):
 @require_POST
 @login_required
 def enter_room(request):
-    raw_room_name = request.POST.get("room_name", "")
-    room_name = slugify(raw_room_name)
-    room_password = request.POST.get("room_password", "")
-
-    if not room_name:
-        messages.error(request, "Please enter a valid room name.")
+    form = EnterRoomForm(request.POST)
+    if not form.is_valid():
+        first_error = next(iter(form.errors.values()))[0]
+        messages.error(request, first_error)
         return redirect("index")
+
+    room_name = form.cleaned_data["room_name"]
+    room_password = form.cleaned_data["room_password"]
+    message_lifetime = form.cleaned_data["message_lifetime"]
 
     room_obj = ChatRoom.objects.filter(name=room_name).first()
     if room_obj is None:
-        if not request.user.is_superuser and not room_password:
+        if not room_password:
             messages.error(request, "New rooms must have a password.")
             return redirect("index")
 
         room_obj = ChatRoom(name=room_name)
-        if room_password:
-            room_obj.set_password(room_password)
-        raw_lifetime = request.POST.get("message_lifetime", "")
-        if raw_lifetime.isdigit() and int(raw_lifetime) > 0:
-            room_obj.message_lifetime = int(raw_lifetime)
+        room_obj.set_password(room_password)
+        if message_lifetime is not None:
+            room_obj.message_lifetime = message_lifetime
         room_obj.save()
         grant_room_access(request.session, room_obj.name)
         return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))
