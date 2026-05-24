@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from chat.models import FriendRequest, Friendship
+from chat.models import FriendBlock, FriendRequest, Friendship
 from chat.services import friends as friend_svc
 
 
@@ -73,6 +73,39 @@ class TestFriendListViewSecurity(TestCase):
         response = self.client.get(reverse("api-friends-unread-count"))
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
+
+    def test_list_friends_returns_friend_data(self):
+        alice = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        bob = User.objects.create_user(
+            username="bob", password="Pass123", is_active=True
+        )
+        Friendship.create_between(alice.id, bob.id)
+        self.client.force_login(alice)
+
+        response = self.client.get(reverse("api-friends-list"))
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        usernames = [f["username"] for f in data["friends"]]
+        self.assertIn("bob", usernames)
+
+    def test_list_friends_includes_banned_users(self):
+        alice = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        bob = User.objects.create_user(
+            username="bob", password="Pass123", is_active=True
+        )
+        FriendBlock.objects.create(blocker=alice, blocked=bob)
+        self.client.force_login(alice)
+
+        response = self.client.get(reverse("api-friends-list"))
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        banned = [f for f in data["friends"] if f["banned"]]
+        self.assertEqual(len(banned), 1)
+        self.assertEqual(banned[0]["username"], "bob")
 
 
 class TestFriendServiceLogic(TestCase):
@@ -158,3 +191,38 @@ class TestFriendServiceLogic(TestCase):
         result = friend_svc.remove_friend(alice.id, "bob")
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], "not_friends")
+
+    def test_send_request_creates_pending_request(self):
+        alice = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        User.objects.create_user(username="bob", password="Pass123", is_active=True)
+
+        result = friend_svc.send_request(alice.id, "bob", room_obj=None)
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["code"], "sent")
+        self.assertTrue(FriendRequest.objects.filter(from_user=alice).exists())
+
+    def test_send_request_when_already_pending_returns_error(self):
+        alice = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        User.objects.create_user(username="bob", password="Pass123", is_active=True)
+
+        friend_svc.send_request(alice.id, "bob", room_obj=None)
+        result = friend_svc.send_request(alice.id, "bob", room_obj=None)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], "already_pending")
+
+    def test_accept_request_when_already_friends_returns_error(self):
+        alice = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        bob = User.objects.create_user(
+            username="bob", password="Pass123", is_active=True
+        )
+        Friendship.create_between(alice.id, bob.id)
+
+        result = friend_svc.accept_request(alice.id, "bob")
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], "already_friends")

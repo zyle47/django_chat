@@ -14,12 +14,13 @@ other threads cannot see.
 from collections import deque
 
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth.models import AnonymousUser, User
 from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
-from chat.models import ChatMessage, ChatRoom
+from chat.models import ChatMessage, ChatRoom, FriendRequest
 from chat.services import presence
 from chat.services.room_access import ROOM_ACCESS_SESSION_KEY
 from chat.ws.consumers.chat import ChatConsumer
@@ -327,4 +328,127 @@ class TestChatConsumerEditDelete(TransactionTestCase):
 
         refreshed = await database_sync_to_async(ChatMessage.objects.get)(id=msg.id)
         self.assertEqual(refreshed.message, "bobs message")
+        await c.disconnect()
+
+
+class TestChatConsumerChannelEvents(TransactionTestCase):
+    """Tests for channel-layer events pushed directly to the chat room group."""
+
+    def setUp(self):
+        presence._room_members.clear()
+        presence._user_channels.clear()
+
+    async def _connected(self, room_name="evtroom", username="alice"):
+        room = await database_sync_to_async(ChatRoom.objects.create)(name=room_name)
+        user = await database_sync_to_async(User.objects.create_user)(
+            username=username, password="Pass123", is_active=True
+        )
+        c = _make_communicator(room.public_id, user, room_name=room.name)
+        await c.connect()
+        return c, room, user
+
+    async def test_chat_image_event_is_forwarded(self):
+        c, room, user = await self._connected()
+        await get_channel_layer().group_send(
+            f"chat_{room.public_id}",
+            {
+                "type": "chat_image",
+                "image_id": 1,
+                "image_url": "/chat/image/1/",
+                "username": "alice",
+                "color": "hsl(0,50%,50%)",
+                "caption": "a pic",
+                "expires_at": "2099-01-01T00:00:00+00:00",
+            },
+        )
+        msg = await c.receive_json_from()
+        self.assertEqual(msg["type"], "chat_image")
+        self.assertEqual(msg["image_id"], 1)
+        await c.disconnect()
+
+    async def test_image_deleted_event_is_forwarded(self):
+        c, room, user = await self._connected()
+        await get_channel_layer().group_send(
+            f"chat_{room.public_id}",
+            {"type": "image_deleted", "image_id": 42},
+        )
+        msg = await c.receive_json_from()
+        self.assertEqual(msg["type"], "image_deleted")
+        self.assertEqual(msg["image_id"], 42)
+        await c.disconnect()
+
+    async def test_whisper_event_is_forwarded(self):
+        c, room, user = await self._connected()
+        await get_channel_layer().group_send(
+            f"chat_{room.public_id}",
+            {"type": "whisper", "text": "// hello", "kind": "info"},
+        )
+        msg = await c.receive_json_from()
+        self.assertEqual(msg["type"], "whisper")
+        self.assertEqual(msg["text"], "// hello")
+        await c.disconnect()
+
+
+class TestChatConsumerFriendCommands(TransactionTestCase):
+    def setUp(self):
+        presence._room_members.clear()
+        presence._user_channels.clear()
+
+    async def _setup(self, room_name, alice_name="alice", bob_name="bob"):
+        room = await database_sync_to_async(ChatRoom.objects.create)(name=room_name)
+        alice = await database_sync_to_async(User.objects.create_user)(
+            username=alice_name, password="Pass123", is_active=True
+        )
+        bob = await database_sync_to_async(User.objects.create_user)(
+            username=bob_name, password="Pass123", is_active=True
+        )
+        return room, alice, bob
+
+    async def test_accept_no_pending_sends_error_whisper(self):
+        room, alice, bob = await self._setup("cmd-room1")
+        c = _make_communicator(room.public_id, alice, room_name=room.name)
+        await c.connect()
+        await c.send_json_to({"type": "message", "message": "/accept bob"})
+        response = await c.receive_json_from()
+        self.assertEqual(response["type"], "whisper")
+        self.assertIn("no pending", response["text"])
+        await c.disconnect()
+
+    async def test_reject_no_pending_sends_error_whisper(self):
+        room, alice, bob = await self._setup("cmd-room2")
+        c = _make_communicator(room.public_id, alice, room_name=room.name)
+        await c.connect()
+        await c.send_json_to({"type": "message", "message": "/reject bob"})
+        response = await c.receive_json_from()
+        self.assertEqual(response["type"], "whisper")
+        await c.disconnect()
+
+    async def test_accept_pending_request_sends_success_whisper(self):
+        room, alice, bob = await self._setup("cmd-room3")
+        await database_sync_to_async(FriendRequest.objects.create)(
+            from_user=bob,
+            to_user=alice,
+            expires_at=timezone.now() + timezone.timedelta(minutes=5),
+        )
+        c = _make_communicator(room.public_id, alice, room_name=room.name)
+        await c.connect()
+        await c.send_json_to({"type": "message", "message": "/accept bob"})
+        response = await c.receive_json_from()
+        self.assertEqual(response["type"], "whisper")
+        self.assertIn("friends with", response["text"])
+        await c.disconnect()
+
+    async def test_reject_pending_request_sends_success_whisper(self):
+        room, alice, bob = await self._setup("cmd-room4")
+        await database_sync_to_async(FriendRequest.objects.create)(
+            from_user=bob,
+            to_user=alice,
+            expires_at=timezone.now() + timezone.timedelta(minutes=5),
+        )
+        c = _make_communicator(room.public_id, alice, room_name=room.name)
+        await c.connect()
+        await c.send_json_to({"type": "message", "message": "/reject bob"})
+        response = await c.receive_json_from()
+        self.assertEqual(response["type"], "whisper")
+        self.assertIn("rejected", response["text"])
         await c.disconnect()
