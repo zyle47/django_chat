@@ -1,6 +1,6 @@
 # DJ Chat
 
-Privacy-first, self-hosted real-time chat over Tor. Built with Django + Channels + Docker. CI/CD test
+Privacy-first, self-hosted real-time chat over Tor. Built with Django + Channels + Docker.
 
 ## Features
 
@@ -52,6 +52,16 @@ python manage.py test
 
 ---
 
+## CI
+
+GitHub Actions runs on every push/PR to `master`:
+
+- Checks for missing migrations
+- Runs the full test suite with `coverage`
+- On PRs, enforces 100% diff coverage with `diff-cover` — new code must be tested
+
+---
+
 ## Production (Docker + Tor)
 
 Full setup instructions are encoded in `instructions.zyle47` using the ZYLE47 algorithm.
@@ -72,6 +82,22 @@ To encode any file:
 
 ```bash
 python3 zyle_encode.py <file> > output.zyle47
+```
+
+### Auto-update script
+
+`update-django-chat.sh` is meant to be run via cron on the production server. Each run:
+
+- Checks if Tor is unhealthy and restarts it if so
+- Pulls latest `master` from origin
+- If `requirements.txt` changed, rebuilds the Docker image
+- Brings the `django-chat` container back up
+- If already up to date, does a clean container restart anyway
+
+Example cron entry (runs every 5 minutes):
+
+```
+*/5 * * * * /home/zyle44/Documents/nemanja/django_chat/update-django-chat.sh >> /home/zyle44/Documents/nemanja/django_chat/update_log.txt 2>&1
 ```
 
 ---
