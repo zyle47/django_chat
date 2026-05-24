@@ -1,10 +1,8 @@
 import io
-import json
 import mimetypes
 import os
 
 from asgiref.sync import async_to_sync
-from PIL import Image
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
@@ -13,8 +11,9 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from PIL import Image
 
-from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
+from chat.models import ChatImage, ChatRoom, UserRoomRead
 from chat.services.realtime import publish_room_activity
 from chat.services.room_access import grant_room_access, has_room_access
 from chat.services.room_colors import room_color_for_username
@@ -24,14 +23,14 @@ from chat.services.room_display import room_display as _room_display
 def _is_valid_image(f):
     header = f.read(12)
     f.seek(0)
-    if header[:3] == b'\xff\xd8\xff':
-        return 'jpg'
-    if header[:8] == b'\x89PNG\r\n\x1a\n':
-        return 'png'
-    if header[:6] in (b'GIF87a', b'GIF89a'):
-        return 'gif'
-    if header[:4] == b'RIFF' and header[8:12] == b'WEBP':
-        return 'webp'
+    if header[:3] == b"\xff\xd8\xff":
+        return "jpg"
+    if header[:8] == b"\x89PNG\r\n\x1a\n":
+        return "png"
+    if header[:6] in (b"GIF87a", b"GIF89a"):
+        return "gif"
+    if header[:4] == b"RIFF" and header[8:12] == b"WEBP":
+        return "webp"
     return None
 
 
@@ -45,7 +44,9 @@ def room(request, public_id):
     if request.user.is_superuser:
         grant_room_access(request.session, room_obj.name)
     elif not has_room_access(request.session, room_obj.name):
-        messages.error(request, "Enter room password from the lobby to access this room.")
+        messages.error(
+            request, "Enter room password from the lobby to access this room."
+        )
         return redirect("index")
 
     now = timezone.now()
@@ -62,33 +63,39 @@ def room(request, public_id):
         .order_by("created_at")
     )
     recent_images = list(
-        ChatImage.objects.filter(room=room_obj, expires_at__gt=now).order_by("uploaded_at")
+        ChatImage.objects.filter(room=room_obj, expires_at__gt=now).order_by(
+            "uploaded_at"
+        )
     )
 
     items = []
     for entry in recent_messages:
-        items.append({
-            "type": "message",
-            "id": entry.id,
-            "username": entry.username,
-            "message": entry.message,
-            "edited_at": entry.edited_at,
-            "time": entry.created_at,
-            "expires_at": entry.expires_at,
-            "color": room_color_for_username(room_obj.name, entry.username),
-            "is_mine": entry.username == request.user.username,
-        })
+        items.append(
+            {
+                "type": "message",
+                "id": entry.id,
+                "username": entry.username,
+                "message": entry.message,
+                "edited_at": entry.edited_at,
+                "time": entry.created_at,
+                "expires_at": entry.expires_at,
+                "color": room_color_for_username(room_obj.name, entry.username),
+                "is_mine": entry.username == request.user.username,
+            }
+        )
     for img in recent_images:
-        items.append({
-            "type": "image",
-            "id": img.id,
-            "username": img.username,
-            "color": img.color,
-            "caption": img.caption,
-            "time": img.uploaded_at,
-            "expires_at": img.expires_at,
-            "is_mine": img.user_id == request.user.id,
-        })
+        items.append(
+            {
+                "type": "image",
+                "id": img.id,
+                "username": img.username,
+                "color": img.color,
+                "caption": img.caption,
+                "time": img.uploaded_at,
+                "expires_at": img.expires_at,
+                "is_mine": img.user_id == request.user.id,
+            }
+        )
     items.sort(key=lambda x: x["time"])
 
     disp = _room_display(room_obj.name)
@@ -120,27 +127,38 @@ def upload_image(request, public_id):
 
     ext = _is_valid_image(f)
     if not ext:
-        return JsonResponse({"error": "Not a supported image (JPEG/PNG/GIF/WebP)."}, status=400)
+        return JsonResponse(
+            {"error": "Not a supported image (JPEG/PNG/GIF/WebP)."}, status=400
+        )
 
     active_count = ChatImage.objects.filter(
         room=room_obj, user=request.user, expires_at__gt=timezone.now()
     ).count()
     if active_count >= settings.CHAT_IMAGE_MAX_PER_USER:
-        return JsonResponse({"error": f"Max {settings.CHAT_IMAGE_MAX_PER_USER} images per user."}, status=400)
+        return JsonResponse(
+            {"error": f"Max {settings.CHAT_IMAGE_MAX_PER_USER} images per user."},
+            status=400,
+        )
 
     caption = request.POST.get("caption", "").strip()[:1000]
     color = room_color_for_username(room_obj.name, request.user.username)
-    expires_at = timezone.now() + timezone.timedelta(seconds=settings.CHAT_IMAGE_EXPIRY_SECONDS)
+    expires_at = timezone.now() + timezone.timedelta(
+        seconds=settings.CHAT_IMAGE_EXPIRY_SECONDS
+    )
 
     # Compress to WebP via Pillow (decompression bomb guard applied first)
     try:
         _prev_max = Image.MAX_IMAGE_PIXELS
         Image.MAX_IMAGE_PIXELS = settings.CHAT_IMAGE_MAX_PIXELS
         pil_img = Image.open(f)
-        pil_img.verify()   # raises on corrupt files
+        pil_img.verify()  # raises on corrupt files
         f.seek(0)
         pil_img = Image.open(f)
-        pil_img = pil_img.convert("RGBA") if pil_img.mode in ("RGBA", "LA", "P") else pil_img.convert("RGB")
+        pil_img = (
+            pil_img.convert("RGBA")
+            if pil_img.mode in ("RGBA", "LA", "P")
+            else pil_img.convert("RGB")
+        )
         buf = io.BytesIO()
         pil_img.save(buf, format="WEBP", quality=82, method=4)
         buf.seek(0)
@@ -175,11 +193,13 @@ def upload_image(request, public_id):
         },
     )
     publish_room_activity(room_obj.name, request.user.id)
-    return JsonResponse({
-        "ok": True,
-        "image_id": img.id,
-        "expires_at": img.expires_at.isoformat(),
-    })
+    return JsonResponse(
+        {
+            "ok": True,
+            "image_id": img.id,
+            "expires_at": img.expires_at.isoformat(),
+        }
+    )
 
 
 @login_required
@@ -192,7 +212,10 @@ def serve_image(request, image_id):
     if not img.image or not os.path.isfile(img.image.path):
         raise Http404
     content_type, _ = mimetypes.guess_type(img.image.name)
-    response = FileResponse(open(img.image.path, "rb"), content_type=content_type or "application/octet-stream")
+    response = FileResponse(
+        open(img.image.path, "rb"),
+        content_type=content_type or "application/octet-stream",
+    )
     response["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
     response["X-Content-Type-Options"] = "nosniff"
     return response

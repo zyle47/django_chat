@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0016_chatroom_public_id_unique'),
+        ("chat", "0016_chatroom_public_id_unique"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='chatroom',
-            name='public_id',
-            field=models.CharField(db_index=True, default='', editable=False, max_length=64, unique=True),
+            model_name="chatroom",
+            name="public_id",
+            field=models.CharField(
+                db_index=True, default="", editable=False, max_length=64, unique=True
+            ),
         ),
     ]

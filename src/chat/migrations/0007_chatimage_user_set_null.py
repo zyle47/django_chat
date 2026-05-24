@@ -6,16 +6,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0006_add_user_room_read'),
+        ("chat", "0006_add_user_room_read"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='chatimage',
-            name='user',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='chat_images', to=settings.AUTH_USER_MODEL),
+            model_name="chatimage",
+            name="user",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="chat_images",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

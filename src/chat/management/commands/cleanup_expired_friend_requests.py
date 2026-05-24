@@ -9,4 +9,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         count, _ = FriendRequest.objects.filter(expires_at__lte=timezone.now()).delete()
-        self.stdout.write(self.style.SUCCESS(f"Deleted {count} expired friend request(s)."))
+        self.stdout.write(
+            self.style.SUCCESS(f"Deleted {count} expired friend request(s).")
+        )

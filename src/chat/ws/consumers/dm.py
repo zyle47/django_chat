@@ -51,9 +51,14 @@ class DMConsumer(AsyncWebsocketConsumer):
         await self.accept()
         # User just opened the conversation — mark read and notify peer.
         read_at = await self._mark_read()
-        await self.channel_layer.group_send(self.group_name, {
-            "type": "dm_read", "user_id": self.user_id, "last_read_at": read_at.isoformat(),
-        })
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                "type": "dm_read",
+                "user_id": self.user_id,
+                "last_read_at": read_at.isoformat(),
+            },
+        )
 
     async def disconnect(self, close_code):
         if hasattr(self, "group_name"):
@@ -107,17 +112,22 @@ class DMConsumer(AsyncWebsocketConsumer):
             return
 
         msg = await self._save_message(text)
-        await self.channel_layer.group_send(self.group_name, {
-            "type": "dm_message",
-            "id": msg.id,
-            "from_user_id": msg.from_user_id,
-            "from_username": self.username,
-            "message": msg.message,
-            "created_at": msg.created_at.isoformat(),
-            "expires_at": msg.expires_at.isoformat(),
-        })
+        await self.channel_layer.group_send(
+            self.group_name,
+            {
+                "type": "dm_message",
+                "id": msg.id,
+                "from_user_id": msg.from_user_id,
+                "from_username": self.username,
+                "message": msg.message,
+                "created_at": msg.created_at.isoformat(),
+                "expires_at": msg.expires_at.isoformat(),
+            },
+        )
         # Refresh unread badge for the recipient (and re-render lists in general).
-        await self.channel_layer.group_send(FRIENDS_GROUP_NAME, {"type": "friends_changed"})
+        await self.channel_layer.group_send(
+            FRIENDS_GROUP_NAME, {"type": "friends_changed"}
+        )
 
     async def _handle_delete(self, payload):
         msg_id = payload.get("message_id")
@@ -125,9 +135,13 @@ class DMConsumer(AsyncWebsocketConsumer):
             return
         deleted = await self._soft_delete(msg_id)
         if deleted:
-            await self.channel_layer.group_send(self.group_name, {
-                "type": "dm_deleted", "id": msg_id,
-            })
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "dm_deleted",
+                    "id": msg_id,
+                },
+            )
 
     async def _handle_edit(self, payload):
         msg_id = payload.get("message_id")
@@ -138,12 +152,15 @@ class DMConsumer(AsyncWebsocketConsumer):
             new_text = new_text[:2000]
         edited_at = await self._edit(msg_id, new_text)
         if edited_at:
-            await self.channel_layer.group_send(self.group_name, {
-                "type": "dm_edited",
-                "id": msg_id,
-                "message": new_text,
-                "edited_at": edited_at.isoformat(),
-            })
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "dm_edited",
+                    "id": msg_id,
+                    "message": new_text,
+                    "edited_at": edited_at.isoformat(),
+                },
+            )
 
     # ── Group event handlers ──
 
@@ -155,38 +172,55 @@ class DMConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 FRIENDS_GROUP_NAME, {"type": "friends_changed"}
             )
-            await self.channel_layer.group_send(self.group_name, {
-                "type": "dm_read", "user_id": self.user_id, "last_read_at": read_at.isoformat(),
-            })
-        await self.send(text_data=json.dumps({
-            "type": "dm_message",
-            "id": event["id"],
-            "from_user_id": event["from_user_id"],
-            "from_username": event["from_username"],
-            "message": event["message"],
-            "created_at": event["created_at"],
-            "expires_at": event["expires_at"],
-        }))
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "dm_read",
+                    "user_id": self.user_id,
+                    "last_read_at": read_at.isoformat(),
+                },
+            )
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "dm_message",
+                    "id": event["id"],
+                    "from_user_id": event["from_user_id"],
+                    "from_username": event["from_username"],
+                    "message": event["message"],
+                    "created_at": event["created_at"],
+                    "expires_at": event["expires_at"],
+                }
+            )
+        )
 
     async def dm_deleted(self, event):
         await self.send(text_data=json.dumps({"type": "dm_deleted", "id": event["id"]}))
 
     async def dm_edited(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "dm_edited",
-            "id": event["id"],
-            "message": event["message"],
-            "edited_at": event["edited_at"],
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "dm_edited",
+                    "id": event["id"],
+                    "message": event["message"],
+                    "edited_at": event["edited_at"],
+                }
+            )
+        )
 
     async def dm_read(self, event):
         # Only forward when the OTHER user did the reading (don't echo to self).
         if event["user_id"] == self.user_id:
             return
-        await self.send(text_data=json.dumps({
-            "type": "dm_read",
-            "last_read_at": event["last_read_at"],
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "dm_read",
+                    "last_read_at": event["last_read_at"],
+                }
+            )
+        )
 
     # ── DB helpers ──
 
@@ -219,9 +253,12 @@ class DMConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _soft_delete(self, msg_id):
-        return DirectMessage.objects.filter(
-            id=msg_id, from_user_id=self.user_id, is_deleted=False
-        ).update(is_deleted=True) > 0
+        return (
+            DirectMessage.objects.filter(
+                id=msg_id, from_user_id=self.user_id, is_deleted=False
+            ).update(is_deleted=True)
+            > 0
+        )
 
     @database_sync_to_async
     def _mark_read(self):

@@ -57,6 +57,9 @@ class Friendship(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f"{self.user_low_id} ↔ {self.user_high_id}"
+
     @staticmethod
     def sort_pair(a_id: int, b_id: int) -> tuple[int, int]:
         return (a_id, b_id) if a_id < b_id else (b_id, a_id)
@@ -72,9 +75,6 @@ class Friendship(models.Model):
     def create_between(cls, a_id: int, b_id: int) -> "Friendship":
         low, high = cls.sort_pair(a_id, b_id)
         return cls.objects.create(user_low_id=low, user_high_id=high)
-
-    def __str__(self):
-        return f"{self.user_low_id} ↔ {self.user_high_id}"
 
 
 class FriendBlock(models.Model):
@@ -94,6 +94,9 @@ class FriendBlock(models.Model):
                 fields=["blocker", "blocked"], name="unique_friend_block_pair"
             ),
         ]
+
+    def __str__(self):
+        return f"{self.blocker_id} blocks {self.blocked_id}"
 
     @classmethod
     def is_blocked(cls, blocker_id: int, blocked_id: int) -> bool:

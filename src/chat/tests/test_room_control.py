@@ -7,26 +7,34 @@ from chat.models import ChatRoom
 
 class TestRoomControlViews(TestCase):
     def test_superadmin_only_room_control_forbidden_for_regular_user(self):
-        regular_user = User.objects.create_user(username="regular", password="StrongPass123", is_active=True)
+        regular_user = User.objects.create_user(
+            username="regular", password="StrongPass123", is_active=True
+        )
         self.client.force_login(regular_user)
 
         response = self.client.get(reverse("admin-room-control-list"))
         self.assertEqual(response.status_code, 403)
 
     def test_superadmin_can_search_and_sort_rooms(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
         ChatRoom.objects.create(name="general")
         ChatRoom.objects.create(name="support")
 
         self.client.force_login(superadmin)
-        response = self.client.get(reverse("admin-room-control-list"), {"q": "general", "sort": "name"})
+        response = self.client.get(
+            reverse("admin-room-control-list"), {"q": "general", "sort": "name"}
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "general")
         self.assertNotContains(response, "support")
 
     def test_superadmin_can_soft_delete_and_restore_room(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
         room = ChatRoom.objects.create(name="team")
 
         self.client.force_login(superadmin)
@@ -54,7 +62,9 @@ class TestRoomControlViews(TestCase):
         self.assertIn("/accounts/login/", response.url)
 
     def test_superadmin_can_permanently_delete_soft_deleted_room(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
         room = ChatRoom.objects.create(name="deadroom")
         room.soft_delete()
         room.save(update_fields=["is_deleted", "deleted_at"])
@@ -68,7 +78,9 @@ class TestRoomControlViews(TestCase):
         self.assertFalse(ChatRoom.objects.filter(id=room.id).exists())
 
     def test_superadmin_cannot_permanently_delete_active_room(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
         room = ChatRoom.objects.create(name="alive")
 
         self.client.force_login(superadmin)

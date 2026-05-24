@@ -32,7 +32,9 @@ class TestPresenceService(TestCase):
     def test_channels_in_room_for_user_returns_all_channels(self):
         presence.join("general", 1, "ws_a")
         presence.join("general", 1, "ws_b")
-        self.assertEqual(presence.channels_in_room_for_user("general", 1), {"ws_a", "ws_b"})
+        self.assertEqual(
+            presence.channels_in_room_for_user("general", 1), {"ws_a", "ws_b"}
+        )
 
     def test_channels_for_user_spans_multiple_rooms(self):
         presence.join("general", 1, "ws_a")

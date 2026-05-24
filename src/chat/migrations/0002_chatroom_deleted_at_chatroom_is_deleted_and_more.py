@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0001_initial'),
+        ("chat", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='chatroom',
-            name='deleted_at',
+            model_name="chatroom",
+            name="deleted_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='chatroom',
-            name='is_deleted',
+            model_name="chatroom",
+            name="is_deleted",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='chatroom',
-            name='password_hash',
-            field=models.CharField(default='', max_length=255),
+            model_name="chatroom",
+            name="password_hash",
+            field=models.CharField(default="", max_length=255),
         ),
     ]

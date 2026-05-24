@@ -6,23 +6,44 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0005_add_dailystats'),
+        ("chat", "0005_add_dailystats"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UserRoomRead',
+            name="UserRoomRead",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('last_read_at', models.DateTimeField()),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='user_reads', to='chat.chatroom')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='room_reads', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("last_read_at", models.DateTimeField()),
+                (
+                    "room",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="user_reads",
+                        to="chat.chatroom",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="room_reads",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('user', 'room')},
+                "unique_together": {("user", "room")},
             },
         ),
     ]

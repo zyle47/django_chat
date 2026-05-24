@@ -14,15 +14,14 @@ class Command(BaseCommand):
         expired_qs = ChatMessage.objects.filter(expires_at__lte=now)
 
         daily = (
-            expired_qs
-            .annotate(day=TruncDate('created_at'))
-            .values('day')
-            .annotate(total=Count('id'))
+            expired_qs.annotate(day=TruncDate("created_at"))
+            .values("day")
+            .annotate(total=Count("id"))
         )
         for entry in daily:
-            obj, _ = DailyStats.objects.get_or_create(date=entry['day'])
-            obj.message_count += entry['total']
-            obj.save(update_fields=['message_count'])
+            obj, _ = DailyStats.objects.get_or_create(date=entry["day"])
+            obj.message_count += entry["total"]
+            obj.save(update_fields=["message_count"])
 
         count, _ = expired_qs.delete()
         self.stdout.write(self.style.SUCCESS(f"Deleted {count} expired message(s)."))

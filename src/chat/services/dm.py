@@ -1,8 +1,9 @@
 """DM read-state and unread-count helpers."""
 
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime
+from datetime import timezone as dt_timezone
 
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Q
 from django.utils import timezone
 
 from chat.models import DirectMessage, DMRead, Friendship
@@ -18,10 +19,7 @@ def mark_read(user_id: int, peer_id: int) -> None:
 
 def unread_counts_by_peer(user_id: int) -> dict[int, int]:
     """Return {peer_id: unread_message_count} for every conversation."""
-    reads = {
-        r.peer_id: r.last_read_at
-        for r in DMRead.objects.filter(user_id=user_id)
-    }
+    reads = {r.peer_id: r.last_read_at for r in DMRead.objects.filter(user_id=user_id)}
     epoch = datetime.min.replace(tzinfo=dt_timezone.utc)
     now = timezone.now()
     counts: dict[int, int] = {}
@@ -39,14 +37,13 @@ def unread_counts_by_peer(user_id: int) -> dict[int, int]:
 
 def unread_conversation_count(user_id: int) -> int:
     """How many friend conversations contain at least one unread incoming DM."""
-    friendships = Friendship.objects.filter(Q(user_low_id=user_id) | Q(user_high_id=user_id))
+    friendships = Friendship.objects.filter(
+        Q(user_low_id=user_id) | Q(user_high_id=user_id)
+    )
     if not friendships.exists():
         return 0
 
-    reads = {
-        r.peer_id: r.last_read_at
-        for r in DMRead.objects.filter(user_id=user_id)
-    }
+    reads = {r.peer_id: r.last_read_at for r in DMRead.objects.filter(user_id=user_id)}
     epoch = datetime.min.replace(tzinfo=dt_timezone.utc)
 
     count = 0

@@ -10,6 +10,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="chatroom",
             name="public_id",
-            field=models.CharField(db_index=True, editable=False, max_length=64, unique=True),
+            field=models.CharField(
+                db_index=True, editable=False, max_length=64, unique=True
+            ),
         ),
     ]

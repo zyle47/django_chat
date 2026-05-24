@@ -10,6 +10,7 @@ database_sync_to_async calls run in a thread pool that can only see
 *committed* data — TestCase wraps everything in a rolled-back savepoint that
 other threads cannot see.
 """
+
 from collections import deque
 
 from channels.db import database_sync_to_async
@@ -23,8 +24,8 @@ from chat.services import presence
 from chat.services.room_access import ROOM_ACCESS_SESSION_KEY
 from chat.ws.consumers.chat import ChatConsumer
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
+
 
 def _make_communicator(public_id, user, room_name=None):
     """Build a communicator with user and optional session access pre-set."""
@@ -40,6 +41,7 @@ def _make_communicator(public_id, user, room_name=None):
 
 
 # ── Pure unit tests (no WebSocket, no DB) ────────────────────────────────────
+
 
 class TestChatConsumerRateLimiter(TestCase):
     def _consumer(self):
@@ -99,6 +101,7 @@ class TestFriendErrorText(TestCase):
 
 
 # ── WS integration tests ─────────────────────────────────────────────────────
+
 
 class TestChatConsumerConnect(TransactionTestCase):
     def setUp(self):
@@ -246,7 +249,10 @@ class TestChatConsumerEditDelete(TransactionTestCase):
 
     async def _bob_message(self, room, bob):
         return await database_sync_to_async(ChatMessage.objects.create)(
-            room=room, user=bob, username="bob", message="bobs message",
+            room=room,
+            user=bob,
+            username="bob",
+            message="bobs message",
             expires_at=timezone.now() + timezone.timedelta(hours=1),
         )
 
@@ -294,7 +300,9 @@ class TestChatConsumerEditDelete(TransactionTestCase):
         chat_event = await c.receive_json_from()
         msg_id = chat_event["message_id"]
 
-        await c.send_json_to({"type": "message.edit", "message_id": msg_id, "message": "edited"})
+        await c.send_json_to(
+            {"type": "message.edit", "message_id": msg_id, "message": "edited"}
+        )
         response = await c.receive_json_from()
         self.assertEqual(response["type"], "message_edited")
         self.assertEqual(response["message"], "edited")
@@ -310,7 +318,9 @@ class TestChatConsumerEditDelete(TransactionTestCase):
         c = _make_communicator(room.public_id, alice, room_name=room.name)
         await c.connect()
         # Attempt edit, then probe — the probe should be the first response.
-        await c.send_json_to({"type": "message.edit", "message_id": msg.id, "message": "hacked"})
+        await c.send_json_to(
+            {"type": "message.edit", "message_id": msg.id, "message": "hacked"}
+        )
         await c.send_json_to({"type": "message", "message": "probe"})
         response = await c.receive_json_from()
         self.assertEqual(response["type"], "chat_message")

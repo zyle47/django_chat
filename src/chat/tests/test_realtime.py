@@ -24,7 +24,9 @@ class TestRealtime(TestCase):
         d = _room_display("general")
 
         with patch("chat.services.realtime.get_channel_layer", return_value=layer):
-            with patch("chat.services.realtime.async_to_sync", side_effect=lambda fn: fn):
+            with patch(
+                "chat.services.realtime.async_to_sync", side_effect=lambda fn: fn
+            ):
                 publish_room_created("general")
 
         gs.assert_called_once_with(
@@ -46,7 +48,9 @@ class TestRealtime(TestCase):
         layer, gs = _fake_layer()
 
         with patch("chat.services.realtime.get_channel_layer", return_value=layer):
-            with patch("chat.services.realtime.async_to_sync", side_effect=lambda fn: fn):
+            with patch(
+                "chat.services.realtime.async_to_sync", side_effect=lambda fn: fn
+            ):
                 publish_friends_changed()
 
         gs.assert_called_once_with(FRIENDS_GROUP_NAME, {"type": "friends_changed"})
@@ -56,7 +60,9 @@ class TestRealtime(TestCase):
         d = _room_display("general")
 
         with patch("chat.services.realtime.get_channel_layer", return_value=layer):
-            with patch("chat.services.realtime.async_to_sync", side_effect=lambda fn: fn):
+            with patch(
+                "chat.services.realtime.async_to_sync", side_effect=lambda fn: fn
+            ):
                 publish_room_activity("general", from_user_id=42)
 
         gs.assert_called_once_with(
@@ -69,7 +75,9 @@ class TestRealtime(TestCase):
         d = _room_display("general")
 
         with patch("chat.services.realtime.get_channel_layer", return_value=layer):
-            with patch("chat.services.realtime.async_to_sync", side_effect=lambda fn: fn):
+            with patch(
+                "chat.services.realtime.async_to_sync", side_effect=lambda fn: fn
+            ):
                 publish_room_recompute("general")
 
         gs.assert_called_once_with(

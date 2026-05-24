@@ -15,6 +15,8 @@ ROOM_USER_COLORS = [
 
 
 def room_color_for_username(room_name, username):
-    normalized_key = f"{room_name.strip().lower()}::{username.strip().lower()}".encode("utf-8")
+    normalized_key = f"{room_name.strip().lower()}::{username.strip().lower()}".encode(
+        "utf-8"
+    )
     digest = hashlib.sha256(normalized_key).digest()
     return ROOM_USER_COLORS[digest[0] % len(ROOM_USER_COLORS)]

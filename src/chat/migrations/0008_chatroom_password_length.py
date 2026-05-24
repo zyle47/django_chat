@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0007_chatimage_user_set_null'),
+        ("chat", "0007_chatimage_user_set_null"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='chatroom',
-            name='password_length',
+            model_name="chatroom",
+            name="password_length",
             field=models.PositiveSmallIntegerField(default=0),
         ),
     ]

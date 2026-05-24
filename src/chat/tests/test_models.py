@@ -96,7 +96,9 @@ class TestDirectMessageModel(TestCase):
         alice = User.objects.create_user(username="alice", password="Pass123")
         bob = User.objects.create_user(username="bob", password="Pass123")
         dm = DirectMessage.objects.create(
-            from_user=alice, to_user=bob, message="hi",
+            from_user=alice,
+            to_user=bob,
+            message="hi",
             expires_at=timezone.now() + timezone.timedelta(hours=1),
         )
         low, high = DirectMessage.sort_pair(alice.id, bob.id)
@@ -107,7 +109,9 @@ class TestDirectMessageModel(TestCase):
         alice = User.objects.create_user(username="alice", password="Pass123")
         bob = User.objects.create_user(username="bob", password="Pass123")
         dm = DirectMessage.objects.create(
-            from_user=bob, to_user=alice, message="reply",
+            from_user=bob,
+            to_user=alice,
+            message="reply",
             expires_at=timezone.now() + timezone.timedelta(hours=1),
         )
         low, high = DirectMessage.sort_pair(alice.id, bob.id)
