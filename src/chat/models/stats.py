@@ -7,7 +7,7 @@ class DailyStats(models.Model):
     image_count = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ['date']
+        ordering = ["date"]
 
     def __str__(self):
         return f"{self.date}: {self.message_count} msgs"

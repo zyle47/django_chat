@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0003_chatmessage_edited_at_chatmessage_is_deleted_and_more'),
+        ("chat", "0003_chatmessage_edited_at_chatmessage_is_deleted_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='chatmessage',
-            name='expires_at',
+            model_name="chatmessage",
+            name="expires_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

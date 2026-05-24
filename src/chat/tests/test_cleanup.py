@@ -11,15 +11,23 @@ from chat.models import ChatImage, ChatMessage, ChatRoom, DirectMessage, FriendR
 class TestCleanupExpiredMessages(TestCase):
     def setUp(self):
         self.room = ChatRoom.objects.create(name="general")
-        self.user = User.objects.create_user(username="alice", password="Pass123", is_active=True)
+        self.user = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
         now = timezone.now()
         ChatMessage.objects.create(
-            room=self.room, user=self.user, username="alice",
-            message="expired-msg", expires_at=now - timezone.timedelta(hours=1),
+            room=self.room,
+            user=self.user,
+            username="alice",
+            message="expired-msg",
+            expires_at=now - timezone.timedelta(hours=1),
         )
         ChatMessage.objects.create(
-            room=self.room, user=self.user, username="alice",
-            message="active-msg", expires_at=now + timezone.timedelta(hours=1),
+            room=self.room,
+            user=self.user,
+            username="alice",
+            message="active-msg",
+            expires_at=now + timezone.timedelta(hours=1),
         )
 
     def test_expired_messages_are_deleted(self):
@@ -34,7 +42,9 @@ class TestCleanupExpiredMessages(TestCase):
 
     def test_daily_stats_populated_for_expired_messages(self):
         from datetime import date
+
         from chat.models import DailyStats
+
         call_command("cleanup_expired_messages", stdout=StringIO())
         today = date.today()
         stat = DailyStats.objects.filter(date=today).first()
@@ -45,16 +55,26 @@ class TestCleanupExpiredMessages(TestCase):
 class TestCleanupExpiredImages(TestCase):
     def setUp(self):
         self.room = ChatRoom.objects.create(name="gallery")
-        self.user = User.objects.create_user(username="bob", password="Pass123", is_active=True)
+        self.user = User.objects.create_user(
+            username="bob", password="Pass123", is_active=True
+        )
         now = timezone.now()
         # image='' is falsy, so the command skips the file-system delete and only removes the DB row
         ChatImage.objects.create(
-            room=self.room, user=self.user, username="bob", color="#fff",
-            image="", expires_at=now - timezone.timedelta(hours=1),
+            room=self.room,
+            user=self.user,
+            username="bob",
+            color="#fff",
+            image="",
+            expires_at=now - timezone.timedelta(hours=1),
         )
         ChatImage.objects.create(
-            room=self.room, user=self.user, username="bob", color="#fff",
-            image="", expires_at=now + timezone.timedelta(hours=1),
+            room=self.room,
+            user=self.user,
+            username="bob",
+            color="#fff",
+            image="",
+            expires_at=now + timezone.timedelta(hours=1),
         )
 
     def test_expired_images_are_deleted(self):
@@ -69,16 +89,24 @@ class TestCleanupExpiredImages(TestCase):
 
 class TestCleanupExpiredDMs(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(username="alice", password="Pass123", is_active=True)
-        self.bob = User.objects.create_user(username="bob", password="Pass123", is_active=True)
+        self.alice = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        self.bob = User.objects.create_user(
+            username="bob", password="Pass123", is_active=True
+        )
         now = timezone.now()
         DirectMessage.objects.create(
-            from_user=self.alice, to_user=self.bob,
-            message="expired-dm", expires_at=now - timezone.timedelta(hours=1),
+            from_user=self.alice,
+            to_user=self.bob,
+            message="expired-dm",
+            expires_at=now - timezone.timedelta(hours=1),
         )
         DirectMessage.objects.create(
-            from_user=self.alice, to_user=self.bob,
-            message="active-dm", expires_at=now + timezone.timedelta(hours=1),
+            from_user=self.alice,
+            to_user=self.bob,
+            message="active-dm",
+            expires_at=now + timezone.timedelta(hours=1),
         )
 
     def test_expired_dms_are_deleted(self):
@@ -94,15 +122,21 @@ class TestCleanupExpiredDMs(TestCase):
 
 class TestCleanupExpiredFriendRequests(TestCase):
     def setUp(self):
-        self.alice = User.objects.create_user(username="alice", password="Pass123", is_active=True)
-        self.bob = User.objects.create_user(username="bob", password="Pass123", is_active=True)
+        self.alice = User.objects.create_user(
+            username="alice", password="Pass123", is_active=True
+        )
+        self.bob = User.objects.create_user(
+            username="bob", password="Pass123", is_active=True
+        )
         now = timezone.now()
         FriendRequest.objects.create(
-            from_user=self.alice, to_user=self.bob,
+            from_user=self.alice,
+            to_user=self.bob,
             expires_at=now - timezone.timedelta(minutes=10),
         )
         FriendRequest.objects.create(
-            from_user=self.bob, to_user=self.alice,
+            from_user=self.bob,
+            to_user=self.alice,
             expires_at=now + timezone.timedelta(minutes=5),
         )
 

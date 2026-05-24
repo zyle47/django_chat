@@ -11,7 +11,9 @@ class DirectMessage(models.Model):
     to_user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="received_direct_messages"
     )
-    pair_low = models.PositiveIntegerField()   # min(from_user_id, to_user_id) for fast pair lookup
+    pair_low = (
+        models.PositiveIntegerField()
+    )  # min(from_user_id, to_user_id) for fast pair lookup
     pair_high = models.PositiveIntegerField()  # max(...)
     message = models.TextField(max_length=2000)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,14 +28,14 @@ class DirectMessage(models.Model):
             models.Index(fields=["expires_at"]),
         ]
 
-    @staticmethod
-    def sort_pair(a_id: int, b_id: int) -> tuple[int, int]:
-        return (a_id, b_id) if a_id < b_id else (b_id, a_id)
+    def __str__(self):
+        return f"DM {self.from_user_id} → {self.to_user_id}"
 
     def save(self, *args, **kwargs):
         low, high = self.sort_pair(self.from_user_id, self.to_user_id)
         self.pair_low, self.pair_high = low, high
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"DM {self.from_user_id} → {self.to_user_id}"
+    @staticmethod
+    def sort_pair(a_id: int, b_id: int) -> tuple[int, int]:
+        return (a_id, b_id) if a_id < b_id else (b_id, a_id)

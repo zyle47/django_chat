@@ -7,7 +7,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from django.utils import timezone
 
-from chat.models import ChatImage, ChatMessage, ChatRoom, UserRoomRead
+from chat.models import ChatMessage, ChatRoom, UserRoomRead
 from chat.services import friends as friend_svc
 from chat.services import presence
 from chat.services.realtime import FRIENDS_GROUP_NAME, LOBBY_GROUP_NAME
@@ -43,7 +43,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close(code=4403)
                 return
 
-        self._msg_times = deque()   # sliding window for rate limiting
+        self._msg_times = deque()  # sliding window for rate limiting
         self._friend_cmd_times = deque()
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
@@ -78,7 +78,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         now = time.monotonic()
         while self._msg_times and now - self._msg_times[0] > 10:
             self._msg_times.popleft()
-        if len(self._msg_times) >= 15:   # max 15 events per 10 seconds
+        if len(self._msg_times) >= 15:  # max 15 events per 10 seconds
             return True
         self._msg_times.append(now)
         return False
@@ -87,7 +87,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         now = time.monotonic()
         while self._friend_cmd_times and now - self._friend_cmd_times[0] > 60:
             self._friend_cmd_times.popleft()
-        if len(self._friend_cmd_times) >= 8:   # max 8 friend commands per minute
+        if len(self._friend_cmd_times) >= 8:  # max 8 friend commands per minute
             return True
         self._friend_cmd_times.append(now)
         return False
@@ -242,7 +242,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if not result["ok"]:
             await self._whisper_self(self._friend_error_text(result, sender_username))
             return
-        await self._whisper_self(f"// you are now friends with {result['from_username']}")
+        await self._whisper_self(
+            f"// you are now friends with {result['from_username']}"
+        )
         await self._whisper_user(
             result["from_user_id"],
             f"// {self.username} accepted your friend request",
@@ -256,7 +258,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if not result["ok"]:
             await self._whisper_self(self._friend_error_text(result, sender_username))
             return
-        await self._whisper_self(f"// rejected friend request from {result['from_username']}")
+        await self._whisper_self(
+            f"// rejected friend request from {result['from_username']}"
+        )
 
     @staticmethod
     def _friend_error_text(result, name):
@@ -276,6 +280,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _delete_pending_request(self, target_user_id):
         from chat.models import FriendRequest
+
         FriendRequest.objects.filter(
             from_user_id=self.user_id, to_user_id=target_user_id
         ).delete()
@@ -283,32 +288,46 @@ class ChatConsumer(AsyncWebsocketConsumer):
     # ── Whisper helpers ──
 
     async def _whisper_self(self, text, kind="info"):
-        await self.send(text_data=json.dumps({
-            "type": "whisper",
-            "text": text,
-            "kind": kind,
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "whisper",
+                    "text": text,
+                    "kind": kind,
+                }
+            )
+        )
 
     async def _whisper_in_room(self, target_user_id, text, kind="info", **extra):
         for ch in presence.channels_in_room_for_user(self.room_name, target_user_id):
-            await self.channel_layer.send(ch, {
-                "type": "whisper",
-                "text": text,
-                "kind": kind,
-                **extra,
-            })
+            await self.channel_layer.send(
+                ch,
+                {
+                    "type": "whisper",
+                    "text": text,
+                    "kind": kind,
+                    **extra,
+                },
+            )
 
     async def _whisper_user(self, target_user_id, text, kind="info", **extra):
         for ch in presence.channels_for_user(target_user_id):
-            await self.channel_layer.send(ch, {
-                "type": "whisper",
-                "text": text,
-                "kind": kind,
-                **extra,
-            })
+            await self.channel_layer.send(
+                ch,
+                {
+                    "type": "whisper",
+                    "text": text,
+                    "kind": kind,
+                    **extra,
+                },
+            )
 
     async def whisper(self, event):
-        payload = {"type": "whisper", "text": event["text"], "kind": event.get("kind", "info")}
+        payload = {
+            "type": "whisper",
+            "text": event["text"],
+            "kind": event.get("kind", "info"),
+        }
         if "from_username" in event:
             payload["from_username"] = event["from_username"]
         await self.send(text_data=json.dumps(payload))
@@ -319,53 +338,75 @@ class ChatConsumer(AsyncWebsocketConsumer):
     # ── Group event handlers (broadcast to this socket) ──
 
     async def chat_message(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "chat_message",
-            "message_id": event["message_id"],
-            "username": event["username"],
-            "message": event["message"],
-            "timestamp": event["timestamp"],
-            "color": event["color"],
-            "expires_at": event["expires_at"],
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "chat_message",
+                    "message_id": event["message_id"],
+                    "username": event["username"],
+                    "message": event["message"],
+                    "timestamp": event["timestamp"],
+                    "color": event["color"],
+                    "expires_at": event["expires_at"],
+                }
+            )
+        )
         await self._mark_room_read()
 
     async def message_deleted(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "message_deleted",
-            "message_id": event["message_id"],
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "message_deleted",
+                    "message_id": event["message_id"],
+                }
+            )
+        )
 
     async def message_edited(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "message_edited",
-            "message_id": event["message_id"],
-            "message": event["message"],
-            "edited_at": event["edited_at"],
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "message_edited",
+                    "message_id": event["message_id"],
+                    "message": event["message"],
+                    "edited_at": event["edited_at"],
+                }
+            )
+        )
 
     async def chat_image(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "chat_image",
-            "image_id": event["image_id"],
-            "image_url": event["image_url"],
-            "username": event["username"],
-            "color": event["color"],
-            "caption": event.get("caption", ""),
-            "expires_at": event["expires_at"],
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "chat_image",
+                    "image_id": event["image_id"],
+                    "image_url": event["image_url"],
+                    "username": event["username"],
+                    "color": event["color"],
+                    "caption": event.get("caption", ""),
+                    "expires_at": event["expires_at"],
+                }
+            )
+        )
 
     async def image_deleted(self, event):
-        await self.send(text_data=json.dumps({
-            "type": "image_deleted",
-            "image_id": event["image_id"],
-        }))
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "image_deleted",
+                    "image_id": event["image_id"],
+                }
+            )
+        )
 
     # ── DB helpers ──
 
     @database_sync_to_async
     def _save_message(self, message):
-        room_obj = ChatRoom.objects.filter(name=self.room_name, is_deleted=False).first()
+        room_obj = ChatRoom.objects.filter(
+            name=self.room_name, is_deleted=False
+        ).first()
         if room_obj is None:
             raise ChatRoom.DoesNotExist
         lifetime = room_obj.message_lifetime or settings.CHAT_MESSAGE_EXPIRY_SECONDS
@@ -404,7 +445,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def _mark_room_read(self):
-        room_obj = ChatRoom.objects.filter(name=self.room_name, is_deleted=False).first()
+        room_obj = ChatRoom.objects.filter(
+            name=self.room_name, is_deleted=False
+        ).first()
         if room_obj:
             UserRoomRead.objects.update_or_create(
                 user_id=self.user_id,

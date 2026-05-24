@@ -3,8 +3,14 @@ name: CI
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - '.gitignore'
+      - '**.md'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - '.gitignore'
+      - '**.md'
 
 jobs:
   test:
@@ -23,6 +29,11 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-test.txt
+
+      - name: Lint
+        run: |
+          ruff check src/
+          ruff format --check src/
 
       - name: Check for missing migrations
         working-directory: src

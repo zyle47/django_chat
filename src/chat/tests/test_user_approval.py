@@ -5,27 +5,41 @@ from django.urls import reverse
 
 class TestUserApprovalViews(TestCase):
     def test_superadmin_only_page_forbidden_for_regular_user(self):
-        regular_user = User.objects.create_user(username="regular", password="StrongPass123", is_active=True)
+        regular_user = User.objects.create_user(
+            username="regular", password="StrongPass123", is_active=True
+        )
         self.client.force_login(regular_user)
 
         response = self.client.get(reverse("admin-user-approval-list"))
         self.assertEqual(response.status_code, 403)
 
     def test_superadmin_can_search_and_sort_users(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
-        User.objects.create_user(username="alpha", password="StrongPass123", is_active=False)
-        User.objects.create_user(username="bravo", password="StrongPass123", is_active=True)
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
+        User.objects.create_user(
+            username="alpha", password="StrongPass123", is_active=False
+        )
+        User.objects.create_user(
+            username="bravo", password="StrongPass123", is_active=True
+        )
 
         self.client.force_login(superadmin)
-        response = self.client.get(reverse("admin-user-approval-list"), {"q": "alpha", "sort": "username"})
+        response = self.client.get(
+            reverse("admin-user-approval-list"), {"q": "alpha", "sort": "username"}
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "alpha")
         self.assertNotContains(response, "bravo")
 
     def test_superadmin_can_activate_user(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
-        pending_user = User.objects.create_user(username="pending", password="StrongPass123", is_active=False)
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
+        pending_user = User.objects.create_user(
+            username="pending", password="StrongPass123", is_active=False
+        )
 
         self.client.force_login(superadmin)
         response = self.client.post(
@@ -38,7 +52,9 @@ class TestUserApprovalViews(TestCase):
         self.assertTrue(pending_user.is_active)
 
     def test_superadmin_cannot_deactivate_self(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
         self.client.force_login(superadmin)
 
         response = self.client.post(
@@ -56,8 +72,12 @@ class TestUserApprovalViews(TestCase):
         self.assertIn("/accounts/login/", response.url)
 
     def test_superadmin_can_permanently_delete_regular_user(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
-        target = User.objects.create_user(username="victim", password="StrongPass123", is_active=False)
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
+        target = User.objects.create_user(
+            username="victim", password="StrongPass123", is_active=False
+        )
 
         self.client.force_login(superadmin)
         response = self.client.post(
@@ -68,8 +88,12 @@ class TestUserApprovalViews(TestCase):
         self.assertFalse(User.objects.filter(id=target.id).exists())
 
     def test_superadmin_cannot_delete_another_superadmin(self):
-        superadmin = User.objects.create_superuser(username="root", password="StrongPass123", email="root@test.com")
-        other_super = User.objects.create_superuser(username="root2", password="StrongPass123", email="root2@test.com")
+        superadmin = User.objects.create_superuser(
+            username="root", password="StrongPass123", email="root@test.com"
+        )
+        other_super = User.objects.create_superuser(
+            username="root2", password="StrongPass123", email="root2@test.com"
+        )
 
         self.client.force_login(superadmin)
         response = self.client.post(

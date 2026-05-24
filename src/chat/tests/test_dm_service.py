@@ -7,7 +7,9 @@ from chat.services import dm as dm_svc
 
 
 def _user(username):
-    return User.objects.create_user(username=username, password="Pass123", is_active=True)
+    return User.objects.create_user(
+        username=username, password="Pass123", is_active=True
+    )
 
 
 def _dm(sender, recipient, minutes_ago=0):

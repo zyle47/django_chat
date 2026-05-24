@@ -25,7 +25,9 @@ DEFAULT_REQUEST_TTL_SECONDS = 5 * 60
 
 
 def _ttl_seconds() -> int:
-    return getattr(settings, "FRIEND_REQUEST_EXPIRY_SECONDS", DEFAULT_REQUEST_TTL_SECONDS)
+    return getattr(
+        settings, "FRIEND_REQUEST_EXPIRY_SECONDS", DEFAULT_REQUEST_TTL_SECONDS
+    )
 
 
 def lookup_user(username: str):
@@ -57,8 +59,7 @@ def send_request(from_user_id: int, target_username: str, room_obj):
     with transaction.atomic():
         # Reverse direction already pending → auto-accept
         reverse = (
-            FriendRequest.objects
-            .select_for_update()
+            FriendRequest.objects.select_for_update()
             .filter(from_user_id=target.id, to_user_id=from_user_id, expires_at__gt=now)
             .first()
         )
@@ -77,14 +78,17 @@ def send_request(from_user_id: int, target_username: str, room_obj):
 
         # Same-direction pending (not expired) → already pending
         existing = (
-            FriendRequest.objects
-            .select_for_update()
+            FriendRequest.objects.select_for_update()
             .filter(from_user_id=from_user_id, to_user_id=target.id)
             .first()
         )
         if existing is not None:
             if existing.expires_at > now:
-                return {"ok": False, "code": "already_pending", "to_username": target.username}
+                return {
+                    "ok": False,
+                    "code": "already_pending",
+                    "to_username": target.username,
+                }
             existing.delete()  # expired stale row, replace below
 
         FriendRequest.objects.create(
@@ -112,13 +116,16 @@ def accept_request(to_user_id: int, from_username: str):
     if sender.id == to_user_id:
         return {"ok": False, "code": "self"}
     if Friendship.exists_between(to_user_id, sender.id):
-        return {"ok": False, "code": "already_friends", "from_username": sender.username}
+        return {
+            "ok": False,
+            "code": "already_friends",
+            "from_username": sender.username,
+        }
 
     now = timezone.now()
     with transaction.atomic():
         req = (
-            FriendRequest.objects
-            .select_for_update()
+            FriendRequest.objects.select_for_update()
             .filter(from_user_id=sender.id, to_user_id=to_user_id, expires_at__gt=now)
             .first()
         )

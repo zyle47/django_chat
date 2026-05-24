@@ -4,22 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0004_add_message_expires_at'),
+        ("chat", "0004_add_message_expires_at"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DailyStats',
+            name="DailyStats",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField(unique=True)),
-                ('message_count', models.PositiveIntegerField(default=0)),
-                ('image_count', models.PositiveIntegerField(default=0)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateField(unique=True)),
+                ("message_count", models.PositiveIntegerField(default=0)),
+                ("image_count", models.PositiveIntegerField(default=0)),
             ],
             options={
-                'ordering': ['date'],
+                "ordering": ["date"],
             },
         ),
     ]

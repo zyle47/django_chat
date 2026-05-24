@@ -17,10 +17,10 @@ def publish_room_created(room_name):
         LOBBY_GROUP_NAME,
         {
             "type": "lobby_room_created",
-            "room_hash": d['hash'],
-            "room_display": d['display'],
-            "room_icon": d['icon'],
-            "room_color": d['color'],
+            "room_hash": d["hash"],
+            "room_display": d["display"],
+            "room_icon": d["icon"],
+            "room_color": d["color"],
         },
     )
 
@@ -45,7 +45,7 @@ def publish_room_activity(room_name, from_user_id):
         LOBBY_GROUP_NAME,
         {
             "type": "lobby_room_activity",
-            "room_hash": room_display(room_name)['hash'],
+            "room_hash": room_display(room_name)["hash"],
             "from_user_id": from_user_id,
         },
     )
@@ -60,6 +60,6 @@ def publish_room_recompute(room_name):
         LOBBY_GROUP_NAME,
         {
             "type": "lobby_room_recompute",
-            "room_hash": room_display(room_name)['hash'],
+            "room_hash": room_display(room_name)["hash"],
         },
     )

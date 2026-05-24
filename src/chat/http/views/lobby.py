@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, DateTimeField, Q, Sum
+from django.db.models import Count, DateTimeField, Sum
 from django.db.models.expressions import OuterRef, Subquery
 from django.db.models.functions import TruncHour
 from django.http import JsonResponse
@@ -24,16 +24,15 @@ def index(request):
     last_24h = now - timedelta(hours=24)
 
     latest_msg_subq = (
-        ChatMessage.objects
-        .filter(room=OuterRef('pk'), is_deleted=False, expires_at__gt=now)
-        .order_by('-created_at')
-        .values('created_at')[:1]
+        ChatMessage.objects.filter(
+            room=OuterRef("pk"), is_deleted=False, expires_at__gt=now
+        )
+        .order_by("-created_at")
+        .values("created_at")[:1]
     )
-    user_read_subq = (
-        UserRoomRead.objects
-        .filter(user=request.user, room=OuterRef('pk'))
-        .values('last_read_at')[:1]
-    )
+    user_read_subq = UserRoomRead.objects.filter(
+        user=request.user, room=OuterRef("pk")
+    ).values("last_read_at")[:1]
     rooms = list(
         ChatRoom.objects.filter(is_deleted=False).annotate(
             latest_msg_at=Subquery(latest_msg_subq, output_field=DateTimeField()),
@@ -41,44 +40,49 @@ def index(request):
         )
     )
     for room in rooms:
-        room.has_unread = (
-            room.latest_msg_at is not None
-            and (room.user_last_read_at is None or room.latest_msg_at > room.user_last_read_at)
+        room.has_unread = room.latest_msg_at is not None and (
+            room.user_last_read_at is None
+            or room.latest_msg_at > room.user_last_read_at
         )
         d = room_display(room.name)
-        room.hash = d['hash']
-        room.display = d['display']
-        room.icon = d['icon']
-        room.color = d['color']
+        room.hash = d["hash"]
+        room.display = d["display"]
+        room.icon = d["icon"]
+        room.color = d["color"]
 
     hourly_qs = (
-        ChatMessage.objects
-        .filter(created_at__gte=last_24h, is_deleted=False)
-        .annotate(hour=TruncHour('created_at'))
-        .values('hour')
-        .annotate(count=Count('id'))
-        .order_by('hour')
+        ChatMessage.objects.filter(created_at__gte=last_24h, is_deleted=False)
+        .annotate(hour=TruncHour("created_at"))
+        .values("hour")
+        .annotate(count=Count("id"))
+        .order_by("hour")
     )
     slots = [0] * 24
     for entry in hourly_qs:
-        idx = 23 - int((now - entry['hour']).total_seconds() // 3600)
+        idx = 23 - int((now - entry["hour"]).total_seconds() // 3600)
         if 0 <= idx < 24:
-            slots[idx] = entry['count']
+            slots[idx] = entry["count"]
 
     msgs_24h = sum(slots)
-    historical = DailyStats.objects.aggregate(total=Sum('message_count'))['total'] or 0
+    historical = DailyStats.objects.aggregate(total=Sum("message_count"))["total"] or 0
 
     stats = {
-        'messages_24h': msgs_24h,
-        'messages_total': historical + msgs_24h,
-        'live_images': ChatImage.objects.filter(expires_at__gt=now, room__is_deleted=False).count(),
-        'rooms': len(rooms),
-        'hourly': slots,
+        "messages_24h": msgs_24h,
+        "messages_total": historical + msgs_24h,
+        "live_images": ChatImage.objects.filter(
+            expires_at__gt=now, room__is_deleted=False
+        ).count(),
+        "rooms": len(rooms),
+        "hourly": slots,
     }
 
     pw_lengths = {room.hash: room.password_length for room in rooms}
 
-    return render(request, 'chat/index.html', {'rooms': rooms, 'stats': stats, 'pw_lengths': pw_lengths})
+    return render(
+        request,
+        "chat/index.html",
+        {"rooms": rooms, "stats": stats, "pw_lengths": pw_lengths},
+    )
 
 
 @require_POST
@@ -116,7 +120,7 @@ def enter_room(request):
         grant_room_access(request.session, room_obj.name)
         return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))
 
-    rl_key = f'rl:room:{request.session.session_key}:{room_name}'
+    rl_key = f"rl:room:{request.session.session_key}:{room_name}"
     if is_rate_limited(rl_key, 10, 300):
         messages.error(request, "Too many attempts. Try again in 5 minutes.")
         return redirect("index")
@@ -132,13 +136,18 @@ def enter_room(request):
 @require_GET
 @login_required
 def room_unread_state(request, public_id):
-    room_obj = ChatRoom.objects.filter(public_id=public_id, is_deleted=False).only("id").first()
+    room_obj = (
+        ChatRoom.objects.filter(public_id=public_id, is_deleted=False)
+        .only("id")
+        .first()
+    )
     if room_obj is None:
         return JsonResponse({"unread": False})
     now = timezone.now()
     latest_at = (
-        ChatMessage.objects
-        .filter(room_id=room_obj.id, is_deleted=False, expires_at__gt=now)
+        ChatMessage.objects.filter(
+            room_id=room_obj.id, is_deleted=False, expires_at__gt=now
+        )
         .order_by("-created_at")
         .values_list("created_at", flat=True)
         .first()
@@ -146,11 +155,8 @@ def room_unread_state(request, public_id):
     if latest_at is None:
         return JsonResponse({"unread": False})
     last_read = (
-        UserRoomRead.objects
-        .filter(user=request.user, room_id=room_obj.id)
+        UserRoomRead.objects.filter(user=request.user, room_id=room_obj.id)
         .values_list("last_read_at", flat=True)
         .first()
     )
     return JsonResponse({"unread": last_read is None or latest_at > last_read})
-
-

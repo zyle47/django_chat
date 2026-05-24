@@ -7,10 +7,14 @@ from chat.services.room_display import _ICONS, room_display
 
 class TestRoomDisplayService(TestCase):
     def test_hash_is_stable(self):
-        self.assertEqual(room_display("general")["hash"], room_display("general")["hash"])
+        self.assertEqual(
+            room_display("general")["hash"], room_display("general")["hash"]
+        )
 
     def test_different_names_produce_different_hashes(self):
-        self.assertNotEqual(room_display("general")["hash"], room_display("support")["hash"])
+        self.assertNotEqual(
+            room_display("general")["hash"], room_display("support")["hash"]
+        )
 
     def test_hash_matches_raw_sha256(self):
         name = "testroom"

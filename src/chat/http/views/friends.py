@@ -18,8 +18,7 @@ User = get_user_model()
 def list_friends(request):
     me = request.user.id
     rows = (
-        Friendship.objects
-        .filter(
+        Friendship.objects.filter(
             Q(user_low_id=me, user_high__is_active=True)
             | Q(user_high_id=me, user_low__is_active=True)
         )
@@ -31,27 +30,30 @@ def list_friends(request):
     for f in rows:
         other = f.user_high if f.user_low_id == me else f.user_low
         n = unread_by_peer.get(other.id, 0)
-        friends.append({
-            "id": other.id,
-            "username": other.username,
-            "since": f.created_at.isoformat(),
-            "unread_count": "10+" if n > 10 else n,
-            "banned": False,
-        })
+        friends.append(
+            {
+                "id": other.id,
+                "username": other.username,
+                "since": f.created_at.isoformat(),
+                "unread_count": "10+" if n > 10 else n,
+                "banned": False,
+            }
+        )
     blocks = (
-        FriendBlock.objects
-        .filter(blocker_id=me, blocked__is_active=True)
+        FriendBlock.objects.filter(blocker_id=me, blocked__is_active=True)
         .select_related("blocked")
         .order_by("-created_at")
     )
     for b in blocks:
-        friends.append({
-            "id": b.blocked.id,
-            "username": b.blocked.username,
-            "since": b.created_at.isoformat(),
-            "unread_count": 0,
-            "banned": True,
-        })
+        friends.append(
+            {
+                "id": b.blocked.id,
+                "username": b.blocked.username,
+                "since": b.created_at.isoformat(),
+                "unread_count": 0,
+                "banned": True,
+            }
+        )
     return JsonResponse({"friends": friends})
 
 
@@ -60,8 +62,7 @@ def list_friends(request):
 def list_pending_requests(request):
     now = timezone.now()
     qs = (
-        FriendRequest.objects
-        .filter(
+        FriendRequest.objects.filter(
             to_user_id=request.user.id,
             expires_at__gt=now,
             from_user__is_active=True,
@@ -150,16 +151,16 @@ def dm_history(request, peer_username):
 
     low, high = DirectMessage.sort_pair(request.user.id, peer.id)
     now = timezone.now()
-    qs = (
-        DirectMessage.objects
-        .filter(pair_low=low, pair_high=high, expires_at__gt=now, is_deleted=False)
-        .order_by("created_at")
-    )
+    qs = DirectMessage.objects.filter(
+        pair_low=low, pair_high=high, expires_at__gt=now, is_deleted=False
+    ).order_by("created_at")
     items = [
         {
             "id": m.id,
             "from_user_id": m.from_user_id,
-            "from_username": request.user.username if m.from_user_id == request.user.id else peer.username,
+            "from_username": request.user.username
+            if m.from_user_id == request.user.id
+            else peer.username,
             "message": m.message,
             "created_at": m.created_at.isoformat(),
             "expires_at": m.expires_at.isoformat(),
@@ -168,24 +169,24 @@ def dm_history(request, peer_username):
         for m in qs
     ]
     my_read = (
-        DMRead.objects
-        .filter(user_id=request.user.id, peer_id=peer.id)
+        DMRead.objects.filter(user_id=request.user.id, peer_id=peer.id)
         .values_list("last_read_at", flat=True)
         .first()
     )
     dm_svc.mark_read(request.user.id, peer.id)
     peer_read = (
-        DMRead.objects
-        .filter(user_id=peer.id, peer_id=request.user.id)
+        DMRead.objects.filter(user_id=peer.id, peer_id=request.user.id)
         .values_list("last_read_at", flat=True)
         .first()
     )
-    return JsonResponse({
-        "messages": items,
-        "peer_username": peer.username,
-        "peer_last_read_at": peer_read.isoformat() if peer_read else None,
-        "my_last_read_at": my_read.isoformat() if my_read else None,
-    })
+    return JsonResponse(
+        {
+            "messages": items,
+            "peer_username": peer.username,
+            "peer_last_read_at": peer_read.isoformat() if peer_read else None,
+            "my_last_read_at": my_read.isoformat() if my_read else None,
+        }
+    )
 
 
 @require_GET

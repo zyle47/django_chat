@@ -6,24 +6,54 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('chat', '0011_directmessage'),
+        ("chat", "0011_directmessage"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DMRead',
+            name="DMRead",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('last_read_at', models.DateTimeField()),
-                ('peer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dm_reads_as_peer', to=settings.AUTH_USER_MODEL)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dm_reads', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("last_read_at", models.DateTimeField()),
+                (
+                    "peer",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="dm_reads_as_peer",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="dm_reads",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'indexes': [models.Index(fields=['user', 'last_read_at'], name='chat_dmread_user_id_f01e34_idx')],
-                'constraints': [models.UniqueConstraint(fields=('user', 'peer'), name='unique_dmread_user_peer')],
+                "indexes": [
+                    models.Index(
+                        fields=["user", "last_read_at"],
+                        name="chat_dmread_user_id_f01e34_idx",
+                    )
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("user", "peer"), name="unique_dmread_user_peer"
+                    )
+                ],
             },
         ),
     ]

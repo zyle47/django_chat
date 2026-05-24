@@ -37,10 +37,18 @@ urlpatterns = [
     path("chat/image/<int:image_id>/", serve_image, name="serve-image"),
     path("chat/image/<int:image_id>/delete/", delete_image, name="delete-image"),
     path("control/users/", user_approval_list, name="admin-user-approval-list"),
-    path("control/users/<int:user_id>/active/", set_user_active_status, name="admin-user-set-active"),
+    path(
+        "control/users/<int:user_id>/active/",
+        set_user_active_status,
+        name="admin-user-set-active",
+    ),
     path("control/users/<int:user_id>/delete/", delete_user, name="admin-user-delete"),
     path("control/rooms/", room_control_list, name="admin-room-control-list"),
-    path("control/rooms/<int:room_id>/deleted/", set_room_deleted_status, name="admin-room-set-deleted"),
+    path(
+        "control/rooms/<int:room_id>/deleted/",
+        set_room_deleted_status,
+        name="admin-room-set-deleted",
+    ),
     path("control/rooms/<int:room_id>/delete/", delete_room, name="admin-room-delete"),
     path("api/friends/", list_friends, name="api-friends-list"),
     path("api/friends/requests/", list_pending_requests, name="api-friends-requests"),
@@ -49,7 +57,11 @@ urlpatterns = [
     path("api/friends/remove/", remove_friend, name="api-friends-remove"),
     path("api/friends/ban/", ban_friend, name="api-friends-ban"),
     path("api/friends/unban/", unban_friend, name="api-friends-unban"),
-    path("api/friends/<str:peer_username>/messages/", dm_history, name="api-dm-history"),
+    path(
+        "api/friends/<str:peer_username>/messages/", dm_history, name="api-dm-history"
+    ),
     path("api/friends/unread-count/", unread_count, name="api-friends-unread-count"),
-    path("api/rooms/<str:public_id>/unread/", room_unread_state, name="api-room-unread"),
+    path(
+        "api/rooms/<str:public_id>/unread/", room_unread_state, name="api-room-unread"
+    ),
 ]
