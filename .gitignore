@@ -25,6 +25,7 @@ __pycache__/
 update_log.txt
 reconnect.log
 .claude/
+.vscode/
 
 # Tor hidden service keys — never commit these
 tor-data/
