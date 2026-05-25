@@ -22,8 +22,6 @@ venv/
 env/
 __pycache__/
 __pycache__/
-update_log.txt
-reconnect.log
 .claude/
 .vscode/
 
