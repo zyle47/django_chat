@@ -109,4 +109,4 @@ Example cron entry (runs every 5 minutes):
 - Pending users are redirected to `/signup/pending/`
 - Login at `/accounts/login/` works only for approved users
 - Superadmin approval page: `/control/users/`
-- Superadmin room control page: `/control/rooms/`
+- Superadmin room control pagee: `/control/rooms/`
