@@ -11,7 +11,6 @@ class ChatRoom(models.Model):
         max_length=64, unique=True, db_index=True, editable=False, default=""
     )
     password_hash = models.CharField(max_length=255, default="")
-    password_length = models.PositiveSmallIntegerField(default=0)
     message_lifetime = models.PositiveIntegerField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
@@ -30,7 +29,6 @@ class ChatRoom(models.Model):
 
     def set_password(self, raw_password):
         self.password_hash = make_password(raw_password)
-        self.password_length = len(raw_password)
 
     def check_password(self, raw_password):
         if not self.password_hash:

@@ -76,12 +76,10 @@ def index(request):
         "hourly": slots,
     }
 
-    pw_lengths = {room.hash: room.password_length for room in rooms}
-
     return render(
         request,
         "chat/index.html",
-        {"rooms": rooms, "stats": stats, "pw_lengths": pw_lengths},
+        {"rooms": rooms, "stats": stats},
     )
 
 
@@ -90,7 +88,7 @@ def index(request):
 def enter_room(request):
     form = EnterRoomForm(request.POST)
     if not form.is_valid():
-        first_error = next(iter(form.errors.values()))[0]
+        first_error = str(next(iter(form.errors.values()))[0])
         messages.error(request, first_error)
         return redirect("index")
 

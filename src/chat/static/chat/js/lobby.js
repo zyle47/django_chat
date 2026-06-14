@@ -14,8 +14,6 @@ const userLifetimeWrap  = document.getElementById('user-lifetime-wrap');
 const adminLifetimeWrap = document.getElementById('admin-lifetime-wrap');
 
 let selectedRoomHash = null;
-let requiredPwLength = 0;
-const pwLengths = JSON.parse(document.getElementById('pw-lengths-data').textContent);
 
 
 async function sha256hex(str) {
@@ -87,7 +85,6 @@ function hideRoomFields() {
 
 function deselectRoom() {
     selectedRoomHash = null;
-    requiredPwLength = 0;
     roomList.querySelectorAll('.room-card.is-selected').forEach(c => c.classList.remove('is-selected'));
     selectHint.style.display = '';
     entryPanel.style.display = 'none';
@@ -111,16 +108,11 @@ document.querySelectorAll('.lifetime-chips').forEach(group => {
 
 if (roomPassInput) {
     roomPassInput.addEventListener('input', () => {
-        const matches = requiredPwLength > 0
-            ? roomPassInput.value.length === requiredPwLength
-            : roomPassInput.value.length > 0;
-        submitWrap.style.display = matches ? '' : 'none';
+        submitWrap.style.display = roomPassInput.value.length > 0 ? '' : 'none';
     });
 
     roomPassInput.closest('form')?.addEventListener('submit', e => {
-        const len = roomPassInput.value.length;
-        const valid = requiredPwLength > 0 ? len === requiredPwLength : len > 0;
-        if (!valid) e.preventDefault();
+        if (roomPassInput.value.length === 0) e.preventDefault();
     });
 }
 
@@ -137,7 +129,6 @@ if (createRoomBtn) {
     createRoomBtn.addEventListener('click', () => {
         roomList.querySelectorAll('.room-card.is-selected').forEach(c => c.classList.remove('is-selected'));
         selectedRoomHash = null;
-        requiredPwLength = 0;
         roomNameInput.value = '';
         showEntryPanel();
         if (IS_SUPERUSER) {
@@ -180,7 +171,6 @@ roomList.addEventListener('click', e => {
     roomList.querySelectorAll('.room-card.is-selected').forEach(c => c.classList.remove('is-selected'));
     btn.classList.add('is-selected');
     selectedRoomHash = btn.dataset.roomHash;
-    requiredPwLength = pwLengths[selectedRoomHash] || 0;
     showEntryPanel();
     if (IS_SUPERUSER) {
         const name = btn.dataset.roomName;

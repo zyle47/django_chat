@@ -43,11 +43,6 @@ class TestChatRoomModel(TestCase):
         room = ChatRoom.objects.create(name="nopass")
         self.assertFalse(room.check_password("anything"))
 
-    def test_set_password_stores_length(self):
-        room = ChatRoom(name="length-test")
-        room.set_password("twelve-chars")
-        self.assertEqual(room.password_length, 12)
-
     def test_soft_delete_and_restore(self):
         room = ChatRoom.objects.create(name="archive")
         room.soft_delete()
