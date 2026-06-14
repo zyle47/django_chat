@@ -1,0 +1,10 @@
+<button class="room-card room-pill-btn{% if room.has_unread %} has-msgs{% endif %}{% if room.is_favorite %} is-favorite{% endif %}" data-room-hash="{{ room.hash }}"{% if user.is_superuser %} data-room-name="{{ room.name }}"{% endif %} type="button">
+    <div class="room-orb" style="background:{{ room.color }};color:#000">{{ room.icon }}</div>
+    <div class="room-card-body">
+        <div class="room-card-name">{{ room.display }}</div>
+        {% if show_note %}
+        <span class="room-note{% if not room.note %} is-empty{% endif %}" data-note-edit data-note="{{ room.note }}" title="Edit your private note">{{ room.note|default:"+ add note" }}</span>
+        {% endif %}
+    </div>
+    <span class="room-star{% if room.is_favorite %} is-active{% endif %}" data-fav-toggle aria-label="Toggle favourite" title="Favourite">{% if room.is_favorite %}&#9733;{% else %}&#9734;{% endif %}</span>
+</button>

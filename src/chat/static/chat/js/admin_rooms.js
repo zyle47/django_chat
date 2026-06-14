@@ -6,17 +6,27 @@ rows.forEach(r => { counts[r.dataset.status] = (counts[r.dataset.status] || 0) +
 document.getElementById('count-active').textContent  = counts.active  || 0;
 document.getElementById('count-deleted').textContent = counts.deleted || 0;
 
+const VALID_TABS = ['active', 'deleted'];
+const TAB_KEY = 'roomControlTab';
+
 function switchTab(target) {
     tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === target));
     rows.forEach(r => { r.hidden = r.dataset.status !== target; });
     document.getElementById('empty-active').hidden  = target !== 'active'  || counts.active  > 0;
     document.getElementById('empty-deleted').hidden = target !== 'deleted' || counts.deleted > 0;
+    try { sessionStorage.setItem(TAB_KEY, target); } catch {}
 }
 
 tabs.forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
 
-// Default tab: deleted
-switchTab('deleted');
+// Restore the tab last used this session (so deleting/restoring a room keeps
+// you on the same tab after the redirect), defaulting to active.
+let initialTab = 'active';
+try {
+    const saved = sessionStorage.getItem(TAB_KEY);
+    if (VALID_TABS.includes(saved)) initialTab = saved;
+} catch {}
+switchTab(initialTab);
 
 let pendingForm = null;
 function confirmDelete(btn) {
