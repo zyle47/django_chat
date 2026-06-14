@@ -44,6 +44,7 @@
                         <th>ID</th>
                         <th>Username</th>
                         <th>Joined</th>
+                        <th style="text-align:center">Tier</th>
                         <th style="text-align:center">Action</th>
                     </tr>
                 </thead>
@@ -52,8 +53,26 @@
                         {% if not user_row.is_superuser %}
                             <tr data-status="{% if user_row.is_active %}registered{% else %}pending{% endif %}">
                                 <td class="muted">#{{ user_row.id }}</td>
-                                <td><strong>{{ user_row.username }}</strong></td>
+                                <td>
+                                    <strong>{{ user_row.username }}</strong>
+                                    {% if user_row.pending_upgrade_level %}
+                                        <span class="badge-upgrade" title="Upgrade requested">&#8679; {{ user_row.pending_upgrade_level }}</span>
+                                    {% endif %}
+                                </td>
                                 <td class="muted">{{ user_row.date_joined|date:"Y-m-d H:i" }}</td>
+                                <td style="text-align:center">
+                                    <form method="post" action="{% url 'admin-user-set-level' user_row.id %}" style="display:inline-flex;gap:0.3rem;align-items:center;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="redirect_query" value="{{ query }}" />
+                                        <input type="hidden" name="redirect_sort" value="{{ sort }}" />
+                                        <select name="level" class="tier-select">
+                                            {% for val, label in level_choices %}
+                                                <option value="{{ val }}" {% if user_row.profile.level == val %}selected{% elif not user_row.profile.level and val == 'bronze' %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button class="act-btn" type="submit" style="font-size:0.8rem;padding:0.2rem 0.5rem;">Set</button>
+                                    </form>
+                                </td>
                                 <td style="text-align:center">
                                     <div class="action-group">
                                         <form method="post" action="{% url 'admin-user-set-active' user_row.id %}">
@@ -79,8 +98,8 @@
                             </tr>
                         {% endif %}
                     {% endfor %}
-                    <tr class="empty-row" id="empty-pending" hidden><td colspan="4">No pending users.</td></tr>
-                    <tr class="empty-row" id="empty-registered" hidden><td colspan="4">No registered users.</td></tr>
+                    <tr class="empty-row" id="empty-pending" hidden><td colspan="5">No pending users.</td></tr>
+                    <tr class="empty-row" id="empty-registered" hidden><td colspan="5">No registered users.</td></tr>
                 </tbody>
             </table>
         </div>

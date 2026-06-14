@@ -22,7 +22,9 @@ venv/
 env/
 __pycache__/
 __pycache__/
-.claude/
+.claude/*
+!.claude/agents/
+!.claude/commands/
 .vscode/
 
 # Tor hidden service keys — never commit these

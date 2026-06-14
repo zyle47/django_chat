@@ -16,6 +16,7 @@ from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats, UserRoomRe
 from chat.services.rate_limit import is_rate_limited
 from chat.services.room_access import grant_room_access
 from chat.services.room_display import room_display
+from chat.services.rooms import room_creation_limit
 
 
 @login_required
@@ -102,7 +103,19 @@ def enter_room(request):
             messages.error(request, "New rooms must have a password.")
             return redirect("index")
 
-        room_obj = ChatRoom(name=room_name)
+        limit = room_creation_limit(request.user)
+        if limit is not None:
+            active_count = ChatRoom.objects.filter(
+                creator=request.user, is_deleted=False
+            ).count()
+            if active_count >= limit:
+                messages.error(
+                    request,
+                    f"Your tier allows {limit} active room(s). Upgrade to create more.",
+                )
+                return redirect("index")
+
+        room_obj = ChatRoom(name=room_name, creator=request.user)
         room_obj.set_password(room_password)
         if message_lifetime is not None:
             room_obj.message_lifetime = message_lifetime

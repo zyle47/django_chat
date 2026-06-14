@@ -147,6 +147,20 @@ CHAT_IMAGE_EXPIRY_SECONDS = 43200  # 12 hours
 CHAT_IMAGE_MAX_PER_USER = 25
 CHAT_MESSAGE_EXPIRY_SECONDS = 86400  # 24 hours
 
+# ── Avatars & tiers ────────────────────────────────────────────────────────────
+AVATAR_SIZE_PX = 128
+AVATAR_MAX_BYTES = 5 * 1024 * 1024
+
+ROOM_CREATION_LIMITS = {"bronze": 1, "silver": 5, "gold": 15, "platinum": None}
+ROOM_PURGE_AFTER_DEACTIVATION_DAYS = 5
+
+CRYPTO_ADDRESSES = {"btc": "PUT-BTC-ADDRESS-HERE", "eth": "PUT-ETH-ADDRESS-HERE"}
+UPGRADE_TIERS = {
+    "silver": {"label": "Silver", "btc": "0.0010", "eth": "0.02"},
+    "gold": {"label": "Gold", "btc": "0.0025", "eth": "0.06"},
+    "platinum": {"label": "Platinum", "btc": "0.0080", "eth": "0.16"},
+}
+
 # ── Friend system ──────────────────────────────────────────────────────────────
 FRIEND_REQUEST_EXPIRY_SECONDS = 5 * 60  # 5 minutes
 DM_MESSAGE_EXPIRY_SECONDS = 48 * 3600  # 48 hours

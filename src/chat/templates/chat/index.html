@@ -21,6 +21,8 @@
                     <a class="btn btn-secondary" href="/control/users/">User Approvals</a>
                     <a class="btn btn-secondary" href="/control/rooms/">Room Control</a>
                 {% endif %}
+                <button type="button" class="btn btn-secondary" id="open-edit-profile">Edit Profile</button>
+                <button type="button" class="btn btn-secondary" id="open-upgrade">Upgrade</button>
                 <form method="post" action="/accounts/logout/" style="display:contents;">
                     {% csrf_token %}
                     <button class="btn btn-danger" type="submit">Logout</button>
@@ -40,7 +42,7 @@
 
             <!-- Join / Create -->
             <div class="join-panel">
-                <span class="user-badge" style="margin-bottom:14px; display:inline-flex;">&#9632;&nbsp;<strong>{{ user.username }}</strong></span>
+                <span class="user-badge" style="margin-bottom:14px; display:inline-flex;">{% include "chat/_user_badge.html" %}</span>
 
                 <div id="room-select-hint" class="select-hint">
                     select a room from the browser &#8594;<br>
@@ -186,9 +188,49 @@
 
     {% if user.is_authenticated %}
     {% include "chat/_friends_widget.html" %}
+
+    <!-- Edit Profile Modal -->
+    <div class="profile-modal-backdrop" id="edit-profile-modal">
+        <div class="profile-modal">
+            <div class="profile-modal-header">
+                <span class="panel-label" style="margin:0;">// Edit Profile</span>
+                <button type="button" class="profile-modal-close" id="close-edit-profile">&#10005;</button>
+            </div>
+            <div class="profile-modal-body">
+                <div class="avatar-preview-wrap">
+                    <img id="avatar-current-img" class="avatar-preview-img" src="" alt="" style="display:none;" />
+                    <div id="avatar-placeholder" class="avatar-placeholder">&#9632;</div>
+                </div>
+                <div class="profile-form-field">
+                    <label for="avatar-file-input">Avatar image</label>
+                    <input type="file" id="avatar-file-input" accept="image/*" />
+                </div>
+                <div id="edit-profile-error" class="profile-error" style="display:none;"></div>
+            </div>
+            <div class="profile-modal-actions">
+                <button type="button" class="btn btn-danger" id="remove-avatar-btn">Remove Avatar</button>
+                <button type="button" class="btn btn-primary" id="save-avatar-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div class="profile-modal-backdrop" id="upgrade-modal">
+        <div class="profile-modal">
+            <div class="profile-modal-header">
+                <span class="panel-label" style="margin:0;">// Upgrade Account</span>
+                <button type="button" class="profile-modal-close" id="close-upgrade">&#10005;</button>
+            </div>
+            <div class="profile-modal-body" id="upgrade-modal-body">
+                <div class="upgrade-loading">Loading&hellip;</div>
+            </div>
+        </div>
+    </div>
+
     <script>const IS_SUPERUSER = {{ user.is_superuser|lower }};</script>
     <script src="{% static 'chat/js/lobby.js' %}"></script>
     <script src="{% static 'chat/js/pulse.js' %}"></script>
+    <script src="{% static 'chat/js/profile.js' %}"></script>
     {% endif %}
 </body>
 </html>
