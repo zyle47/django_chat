@@ -20,10 +20,12 @@ from chat.http.views import (
     serve_avatar,
     serve_image,
     set_room_deleted_status,
+    set_room_favorite_note,
     set_user_active_status,
     set_user_level,
     signup,
     signup_pending,
+    toggle_room_favorite,
     unban_friend,
     unread_count,
     upgrade_account,
@@ -75,5 +77,15 @@ urlpatterns = [
     path("api/friends/unread-count/", unread_count, name="api-friends-unread-count"),
     path(
         "api/rooms/<str:public_id>/unread/", room_unread_state, name="api-room-unread"
+    ),
+    path(
+        "api/rooms/<str:public_id>/favorite/",
+        toggle_room_favorite,
+        name="api-room-favorite",
+    ),
+    path(
+        "api/rooms/<str:public_id>/favorite/note/",
+        set_room_favorite_note,
+        name="api-room-favorite-note",
     ),
 ]

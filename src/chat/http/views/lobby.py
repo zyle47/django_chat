@@ -13,7 +13,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from chat.forms import EnterRoomForm
-from chat.models import ChatImage, ChatMessage, ChatRoom, DailyStats, UserRoomRead
+from chat.models import (
+    ChatImage,
+    ChatMessage,
+    ChatRoom,
+    DailyStats,
+    RoomFavorite,
+    UserRoomRead,
+)
 from chat.services.rate_limit import is_rate_limited
 from chat.services.room_access import grant_room_access
 from chat.services.room_display import room_display
@@ -44,11 +51,20 @@ def index(request):
             user_last_read_at=Subquery(user_read_subq, output_field=DateTimeField()),
         )
     )
+    fav_rows = list(
+        RoomFavorite.objects.filter(user=request.user, room__is_deleted=False)
+        .order_by("-created_at")
+        .values_list("room_id", "note")
+    )
+    fav_room_ids = [room_id for room_id, _ in fav_rows]
+    fav_notes = {room_id: note for room_id, note in fav_rows}
+    fav_set = set(fav_room_ids)
     for room in rooms:
         room.has_unread = room.latest_msg_at is not None and (
             room.user_last_read_at is None
             or room.latest_msg_at > room.user_last_read_at
         )
+        room.is_favorite = room.id in fav_set
         d = room_display(
             room.name,
             custom_color=room.custom_color,
@@ -58,6 +74,15 @@ def index(request):
         room.display = d["display"]
         room.icon = d["icon"]
         room.color = d["color"]
+
+    rooms_by_id = {room.id: room for room in rooms}
+    favorites = []
+    for rid in fav_room_ids:
+        room = rooms_by_id.get(rid)
+        if room is None:
+            continue
+        room.note = fav_notes.get(rid, "")
+        favorites.append(room)
 
     hourly_qs = (
         ChatMessage.objects.filter(created_at__gte=last_24h, is_deleted=False)
@@ -90,6 +115,7 @@ def index(request):
         "chat/index.html",
         {
             "rooms": rooms,
+            "favorites": favorites,
             "stats": stats,
             "can_customize_room": can_customize_room(request.user),
         },
@@ -192,3 +218,47 @@ def room_unread_state(request, public_id):
         .first()
     )
     return JsonResponse({"unread": last_read is None or latest_at > last_read})
+
+
+@require_POST
+@login_required
+def toggle_room_favorite(request, public_id):
+    room_obj = (
+        ChatRoom.objects.filter(public_id=public_id, is_deleted=False)
+        .only("id")
+        .first()
+    )
+    if room_obj is None:
+        return JsonResponse({"error": "no such room"}, status=404)
+    favorite, created = RoomFavorite.objects.get_or_create(
+        user=request.user, room_id=room_obj.id
+    )
+    if not created:
+        favorite.delete()
+        return JsonResponse({"favorited": False})
+    return JsonResponse({"favorited": True})
+
+
+NOTE_MAX_LENGTH = 200
+
+
+@require_POST
+@login_required
+def set_room_favorite_note(request, public_id):
+    room_obj = (
+        ChatRoom.objects.filter(public_id=public_id, is_deleted=False)
+        .only("id")
+        .first()
+    )
+    if room_obj is None:
+        return JsonResponse({"error": "no such room"}, status=404)
+    favorite = RoomFavorite.objects.filter(
+        user=request.user, room_id=room_obj.id
+    ).first()
+    if favorite is None:
+        return JsonResponse({"error": "not a favorite"}, status=404)
+    note = (request.POST.get("note") or "").strip()[:NOTE_MAX_LENGTH]
+    if note != favorite.note:
+        favorite.note = note
+        favorite.save(update_fields=["note"])
+    return JsonResponse({"note": note})
