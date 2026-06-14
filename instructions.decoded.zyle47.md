@@ -252,7 +252,6 @@ docker compose exec django-chat python manage.py migrate
 docker compose exec django-chat python manage.py shell
 ```
 
-
 ---
 
 ## 13. Spinning up a new instance with a fresh onion address
@@ -273,7 +272,7 @@ sudo find tor-data/ -mindepth 1 -delete
 docker compose up -d --build
 ```
 
-**Step 4** — Wait for tor to bootstrap:
+**Step 4** - Wait for tor to bootstrap:
 
 ```bash
 docker logs -f django_chat-tor-1
