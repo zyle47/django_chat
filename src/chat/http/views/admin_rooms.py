@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 
 from chat.http.views.admin_users import superadmin_required
 from chat.models import ChatRoom
+from chat.services.rooms import purge_room
 
 ROOM_SORT_CHOICES = [
     ("-created_at", "Created (Newest First)"),
@@ -61,7 +62,7 @@ def delete_room(request, room_id):
         return HttpResponseRedirect(reverse("admin-room-control-list"))
 
     name = target_room.name
-    target_room.delete()
+    purge_room(target_room)
     messages.success(request, f"Room '{name}' has been permanently deleted.")
 
     redirect_query = request.POST.get("redirect_query", "")

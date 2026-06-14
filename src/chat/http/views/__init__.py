@@ -1,5 +1,10 @@
 from .admin_rooms import delete_room, room_control_list, set_room_deleted_status
-from .admin_users import delete_user, set_user_active_status, user_approval_list
+from .admin_users import (
+    delete_user,
+    set_user_active_status,
+    set_user_level,
+    user_approval_list,
+)
 from .auth import signup, signup_pending
 from .friends import (
     accept_pending,
@@ -19,6 +24,7 @@ from .lobby import (
     set_room_favorite_note,
     toggle_room_favorite,
 )
+from .profile import edit_profile, serve_avatar, upgrade_account
 from .room import delete_image, room, serve_image, upload_image
 
 __all__ = [
@@ -48,4 +54,8 @@ __all__ = [
     "room_unread_state",
     "toggle_room_favorite",
     "set_room_favorite_note",
+    "edit_profile",
+    "serve_avatar",
+    "upgrade_account",
+    "set_user_level",
 ]

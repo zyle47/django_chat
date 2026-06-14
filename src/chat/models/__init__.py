@@ -3,6 +3,7 @@ from .dm_read import DMRead
 from .friendship import FriendBlock, FriendRequest, Friendship
 from .image import ChatImage
 from .message import ChatMessage
+from .profile import UpgradeRequest, UserProfile
 from .room import ChatRoom
 from .room_favorite import RoomFavorite
 from .stats import DailyStats
@@ -20,4 +21,6 @@ __all__ = [
     "FriendBlock",
     "DirectMessage",
     "DMRead",
+    "UserProfile",
+    "UpgradeRequest",
 ]

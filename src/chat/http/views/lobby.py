@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 
 from django.contrib import messages
@@ -23,6 +24,10 @@ from chat.models import (
 from chat.services.rate_limit import is_rate_limited
 from chat.services.room_access import grant_room_access
 from chat.services.room_display import room_display
+from chat.services.rooms import room_creation_limit
+from chat.services.tiers import ICON_CHOICES, can_customize_room
+
+_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
 @login_required
@@ -60,7 +65,11 @@ def index(request):
             or room.latest_msg_at > room.user_last_read_at
         )
         room.is_favorite = room.id in fav_set
-        d = room_display(room.name)
+        d = room_display(
+            room.name,
+            custom_color=room.custom_color,
+            custom_icon=room.custom_icon,
+        )
         room.hash = d["hash"]
         room.display = d["display"]
         room.icon = d["icon"]
@@ -104,7 +113,12 @@ def index(request):
     return render(
         request,
         "chat/index.html",
-        {"rooms": rooms, "favorites": favorites, "stats": stats},
+        {
+            "rooms": rooms,
+            "favorites": favorites,
+            "stats": stats,
+            "can_customize_room": can_customize_room(request.user),
+        },
     )
 
 
@@ -127,10 +141,31 @@ def enter_room(request):
             messages.error(request, "New rooms must have a password.")
             return redirect("index")
 
-        room_obj = ChatRoom(name=room_name)
+        limit = room_creation_limit(request.user)
+        if limit is not None:
+            active_count = ChatRoom.objects.filter(
+                creator=request.user, is_deleted=False
+            ).count()
+            if active_count >= limit:
+                messages.error(
+                    request,
+                    f"Your tier allows {limit} active room(s). Upgrade to create more.",
+                )
+                return redirect("index")
+
+        room_obj = ChatRoom(name=room_name, creator=request.user)
         room_obj.set_password(room_password)
         if message_lifetime is not None:
             room_obj.message_lifetime = message_lifetime
+
+        if can_customize_room(request.user):
+            raw_color = request.POST.get("room_color", "").strip()
+            raw_icon = request.POST.get("room_icon", "").strip()
+            if raw_color and _COLOR_RE.match(raw_color):
+                room_obj.custom_color = raw_color
+            if raw_icon and raw_icon in ICON_CHOICES:
+                room_obj.custom_icon = raw_icon
+
         room_obj.save()
         grant_room_access(request.session, room_obj.name)
         return redirect(reverse("room", kwargs={"public_id": room_obj.public_id}))

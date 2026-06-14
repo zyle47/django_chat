@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from chat.models import DirectMessage, DMRead, Friendship
 from chat.services.realtime import FRIENDS_GROUP_NAME
+from chat.services.tiers import effective_level
 
 User = get_user_model()
 
@@ -45,6 +46,10 @@ class DMConsumer(AsyncWebsocketConsumer):
         self.peer_id = peer.id
         self.group_name = dm_group_name(self.user_id, self.peer_id)
         self._msg_times = deque()
+
+        # Sender's perk tier — computed once per connection (ORM read) then
+        # cached, so every outgoing DM carries the author's tier for the glow.
+        self.tier = await self._effective_level(user)
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.channel_layer.group_add(FRIENDS_GROUP_NAME, self.channel_name)
@@ -122,6 +127,7 @@ class DMConsumer(AsyncWebsocketConsumer):
                 "message": msg.message,
                 "created_at": msg.created_at.isoformat(),
                 "expires_at": msg.expires_at.isoformat(),
+                "tier": self.tier,
             },
         )
         # Refresh unread badge for the recipient (and re-render lists in general).
@@ -190,6 +196,7 @@ class DMConsumer(AsyncWebsocketConsumer):
                     "message": event["message"],
                     "created_at": event["created_at"],
                     "expires_at": event["expires_at"],
+                    "tier": event.get("tier", "bronze"),
                 }
             )
         )
@@ -223,6 +230,11 @@ class DMConsumer(AsyncWebsocketConsumer):
         )
 
     # ── DB helpers ──
+
+    @database_sync_to_async
+    def _effective_level(self, user):
+        # effective_level reads user.profile (ORM) → must run off the event loop.
+        return effective_level(user)
 
     @database_sync_to_async
     def _get_peer(self):

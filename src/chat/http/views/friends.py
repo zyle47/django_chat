@@ -9,6 +9,7 @@ from chat.models import DirectMessage, DMRead, FriendBlock, FriendRequest, Frien
 from chat.services import dm as dm_svc
 from chat.services import friends as friend_svc
 from chat.services.realtime import publish_friends_changed
+from chat.services.tiers import effective_level
 
 User = get_user_model()
 
@@ -37,6 +38,7 @@ def list_friends(request):
                 "since": f.created_at.isoformat(),
                 "unread_count": "10+" if n > 10 else n,
                 "banned": False,
+                "tier": effective_level(other),
             }
         )
     blocks = (
@@ -52,6 +54,7 @@ def list_friends(request):
                 "since": b.created_at.isoformat(),
                 "unread_count": 0,
                 "banned": True,
+                "tier": effective_level(b.blocked),
             }
         )
     return JsonResponse({"friends": friends})

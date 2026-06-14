@@ -13,6 +13,7 @@ from chat.services import presence
 from chat.services.realtime import FRIENDS_GROUP_NAME, LOBBY_GROUP_NAME
 from chat.services.room_access import has_room_access
 from chat.services.room_colors import room_color_for_username
+from chat.services.tiers import effective_level
 
 FRIEND_COMMANDS = {"/add", "/accept", "/reject"}
 
@@ -45,6 +46,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         self._msg_times = deque()  # sliding window for rate limiting
         self._friend_cmd_times = deque()
+
+        # Sender's perk tier — computed once per connection (ORM read), then
+        # cached and stamped onto every outgoing message so receivers can glow.
+        self.tier = await self._effective_level(user)
 
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.channel_layer.group_add(FRIENDS_GROUP_NAME, self.channel_name)
@@ -124,6 +129,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "timestamp": created_at.isoformat(),
                 "color": color,
                 "expires_at": expires_at.isoformat(),
+                "tier": self.tier,
             },
         )
         await self.channel_layer.group_send(
@@ -348,6 +354,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "timestamp": event["timestamp"],
                     "color": event["color"],
                     "expires_at": event["expires_at"],
+                    "tier": event.get("tier", "bronze"),
                 }
             )
         )
@@ -438,6 +445,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         msg.edited_at = timezone.now()
         msg.save(update_fields=["message", "edited_at"])
         return msg.edited_at
+
+    @database_sync_to_async
+    def _effective_level(self, user):
+        # effective_level reads user.profile (ORM) → must run off the event loop.
+        return effective_level(user)
 
     @database_sync_to_async
     def _get_room(self, public_id):

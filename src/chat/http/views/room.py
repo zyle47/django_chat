@@ -6,6 +6,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,10 +15,50 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 
 from chat.models import ChatImage, ChatRoom, UserRoomRead
+from chat.models.profile import UserProfile
 from chat.services.realtime import publish_room_activity
 from chat.services.room_access import grant_room_access, has_room_access
 from chat.services.room_colors import room_color_for_username
 from chat.services.room_display import room_display as _room_display
+from chat.services.tiers import active_image_cap, effective_level
+
+User = get_user_model()
+
+
+def _batch_resolve_tiers(user_ids):
+    """Return a {user_id: level} mapping for the given user_ids.
+
+    Superusers resolve to "platinum". Users with no profile resolve to "bronze".
+    Performs at most two queries: one for superuser flags, one for profiles.
+    """
+    if not user_ids:
+        return {}
+
+    user_ids = list(set(user_ids))
+
+    # One query: find which of these user_ids are superusers.
+    superuser_ids = set(
+        User.objects.filter(id__in=user_ids, is_superuser=True).values_list(
+            "id", flat=True
+        )
+    )
+
+    # One query: fetch profiles for the non-superuser ids.
+    non_super_ids = [uid for uid in user_ids if uid not in superuser_ids]
+    profile_levels = {}
+    if non_super_ids:
+        for uid, level in UserProfile.objects.filter(
+            user_id__in=non_super_ids
+        ).values_list("user_id", "level"):
+            profile_levels[uid] = level
+
+    result = {}
+    for uid in user_ids:
+        if uid in superuser_ids:
+            result[uid] = "platinum"
+        else:
+            result[uid] = profile_levels.get(uid) or "bronze"
+    return result
 
 
 def _is_valid_image(f):
@@ -68,6 +109,16 @@ def room(request, public_id):
         )
     )
 
+    # Collect all author user_ids for a single batch tier lookup.
+    author_ids = []
+    for entry in recent_messages:
+        if entry.user_id is not None:
+            author_ids.append(entry.user_id)
+    for img in recent_images:
+        if img.user_id is not None:
+            author_ids.append(img.user_id)
+    tier_by_user = _batch_resolve_tiers(author_ids)
+
     items = []
     for entry in recent_messages:
         items.append(
@@ -81,6 +132,7 @@ def room(request, public_id):
                 "expires_at": entry.expires_at,
                 "color": room_color_for_username(room_obj.name, entry.username),
                 "is_mine": entry.username == request.user.username,
+                "tier": tier_by_user.get(entry.user_id, "bronze"),
             }
         )
     for img in recent_images:
@@ -94,11 +146,16 @@ def room(request, public_id):
                 "time": img.uploaded_at,
                 "expires_at": img.expires_at,
                 "is_mine": img.user_id == request.user.id,
+                "tier": tier_by_user.get(img.user_id, "bronze"),
             }
         )
     items.sort(key=lambda x: x["time"])
 
-    disp = _room_display(room_obj.name)
+    disp = _room_display(
+        room_obj.name,
+        custom_color=room_obj.custom_color,
+        custom_icon=room_obj.custom_icon,
+    )
     context = {
         "room_name": room_obj.name,
         "public_id": room_obj.public_id,
@@ -134,9 +191,10 @@ def upload_image(request, public_id):
     active_count = ChatImage.objects.filter(
         room=room_obj, user=request.user, expires_at__gt=timezone.now()
     ).count()
-    if active_count >= settings.CHAT_IMAGE_MAX_PER_USER:
+    cap = active_image_cap(request.user)
+    if active_count >= cap:
         return JsonResponse(
-            {"error": f"Max {settings.CHAT_IMAGE_MAX_PER_USER} images per user."},
+            {"error": f"Max {cap} images per user."},
             status=400,
         )
 
@@ -190,6 +248,7 @@ def upload_image(request, public_id):
             "color": color,
             "caption": img.caption,
             "expires_at": img.expires_at.isoformat(),
+            "tier": effective_level(request.user),
         },
     )
     publish_room_activity(room_obj.name, request.user.id)

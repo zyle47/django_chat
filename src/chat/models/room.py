@@ -1,5 +1,6 @@
 import hashlib
 
+from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 from django.utils import timezone
@@ -12,6 +13,16 @@ class ChatRoom(models.Model):
     )
     password_hash = models.CharField(max_length=255, default="")
     message_lifetime = models.PositiveIntegerField(null=True, blank=True)
+    # Platinum-only display customisation; empty => name-hash default.
+    custom_color = models.CharField(max_length=7, blank=True, default="")
+    custom_icon = models.CharField(max_length=8, blank=True, default="")
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_rooms",
+    )
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

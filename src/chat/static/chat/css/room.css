@@ -377,3 +377,41 @@ body {
     #chat-message-submit .btn-label { display: none; }
     #chat-message-submit.uploading .btn-label { display: inline; }
 }
+
+/* ── Avatar & tier pill (room) ── */
+.user-badge-av {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    object-fit: cover;
+    vertical-align: middle;
+    border: 1px solid rgba(0,245,255,0.35);
+    flex-shrink: 0;
+}
+
+.tier-pill {
+    display: inline-block;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: 2px 6px;
+    line-height: 1.4;
+    margin-left: 4px;
+    vertical-align: middle;
+}
+.tier-bronze   { background: #cd7f32; color: #1a0800; }
+.tier-silver   { background: #c0c0c0; color: #111; }
+.tier-gold     { background: #ffd700; color: #1a1000; }
+.tier-platinum { background: #e5e4e2; color: #111; }
+
+/* Author name tier glow — gold & platinum only; bronze/silver are plain */
+.msg-author.tier-gold {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255,215,0,0.8), 0 0 16px rgba(255,215,0,0.4);
+}
+.msg-author.tier-platinum {
+    color: #e5e4e2;
+    text-shadow: 0 0 8px rgba(229,228,226,0.9), 0 0 18px rgba(200,200,220,0.5);
+}

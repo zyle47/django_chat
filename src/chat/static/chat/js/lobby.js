@@ -90,11 +90,14 @@ function showRoomFields() {
     roomPassInput.focus();
 }
 
+const roomCustomizeWrap = document.getElementById('room-customize-wrap');
+
 function hideRoomFields() {
     passwordFieldWrap.style.display = 'none';
     submitWrap.style.display = 'none';
     if (roomPassInput) roomPassInput.value = '';
     if (userLifetimeWrap) userLifetimeWrap.style.display = 'none';
+    if (roomCustomizeWrap) roomCustomizeWrap.style.display = 'none';
 }
 
 function clearSelectedCards() {
@@ -161,12 +164,14 @@ if (createRoomBtn) {
             adminPasswordInput.value = '';
             adminCreateInput.focus();
             if (adminLifetimeWrap) adminLifetimeWrap.style.display = '';
+            if (roomCustomizeWrap) roomCustomizeWrap.style.display = '';
         } else {
             if (selectedFpEl) selectedFpEl.textContent = '// new room';
             if (fingerprintEl) { fingerprintEl.textContent = ''; fingerprintEl.classList.remove('has-value'); }
             passwordFieldWrap.style.display = '';
             submitWrap.style.display = 'none';
             if (userLifetimeWrap) userLifetimeWrap.style.display = '';
+            if (roomCustomizeWrap) roomCustomizeWrap.style.display = '';
             roomNameInput.focus();
         }
     });
@@ -198,6 +203,7 @@ function selectRoomCard(btn) {
         adminPasswordWrap.style.display = 'none';
         adminPasswordInput.value = '';
         if (adminLifetimeWrap) adminLifetimeWrap.style.display = 'none';
+        if (roomCustomizeWrap) roomCustomizeWrap.style.display = 'none';
         roomNameInput.value = name;
     } else {
         selectedFpEl.textContent = '// ' + selectedRoomHash;

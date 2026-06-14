@@ -1,0 +1,2 @@
+{% load static %}
+{% if user.profile.avatar %}<img class="user-badge-av" src="{% url 'serve-avatar' user.id %}" alt="">{% else %}&#9632;{% endif %}&nbsp;<strong>{{ user.username }}</strong><span class="tier-pill tier-{{ user.profile.level|default:'bronze' }}">{{ user.profile.level|default:'bronze'|capfirst }}</span>
