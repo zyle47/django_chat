@@ -12,7 +12,13 @@ from .friends import (
     unban_friend,
     unread_count,
 )
-from .lobby import enter_room, index, room_unread_state
+from .lobby import (
+    enter_room,
+    index,
+    room_unread_state,
+    set_room_favorite_note,
+    toggle_room_favorite,
+)
 from .room import delete_image, room, serve_image, upload_image
 
 __all__ = [
@@ -40,4 +46,6 @@ __all__ = [
     "dm_history",
     "unread_count",
     "room_unread_state",
+    "toggle_room_favorite",
+    "set_room_favorite_note",
 ]

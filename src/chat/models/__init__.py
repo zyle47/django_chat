@@ -4,6 +4,7 @@ from .friendship import FriendBlock, FriendRequest, Friendship
 from .image import ChatImage
 from .message import ChatMessage
 from .room import ChatRoom
+from .room_favorite import RoomFavorite
 from .stats import DailyStats
 from .user_room_read import UserRoomRead
 
@@ -13,6 +14,7 @@ __all__ = [
     "ChatImage",
     "DailyStats",
     "UserRoomRead",
+    "RoomFavorite",
     "FriendRequest",
     "Friendship",
     "FriendBlock",
