@@ -83,7 +83,12 @@ function applyNameFont(el) {
     el.style.fontFamily = fontFromUsername(el.textContent.trim());
 }
 
-document.querySelectorAll('.msg-meta strong').forEach(applyNameFont);
+document.querySelectorAll('.msg-author').forEach(applyNameFont);
+
+const VALID_TIERS = new Set(['bronze', 'silver', 'gold', 'platinum']);
+function safeTier(t) {
+    return VALID_TIERS.has(t) ? t : 'bronze';
+}
 
 function fmt(value) {
     const d = new Date(value);
@@ -212,6 +217,7 @@ function appendMessage(data) {
             <button class="edit-cancel-btn" title="Cancel">&#10005;</button>
         </div>` : ''}`;
     const strong = art.querySelector('strong');
+    strong.className = `msg-author tier-${safeTier(data.tier)}`;
     strong.textContent = data.username;
     applyNameFont(strong);
     art.querySelector('.msg-body').textContent = data.message;
@@ -238,6 +244,7 @@ function appendImage(data) {
         <img class="chat-img" src="${data.image_url}" loading="lazy" alt="Image" />
         ${data.caption ? `<div class="img-caption"></div>` : ''}`;
     const strong = art.querySelector('strong');
+    strong.className = `msg-author tier-${safeTier(data.tier)}`;
     strong.textContent = data.username;
     if (data.caption) art.querySelector('.img-caption').textContent = data.caption;
     applyNameFont(strong);

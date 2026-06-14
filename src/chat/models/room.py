@@ -13,6 +13,9 @@ class ChatRoom(models.Model):
     )
     password_hash = models.CharField(max_length=255, default="")
     message_lifetime = models.PositiveIntegerField(null=True, blank=True)
+    # Platinum-only display customisation; empty => name-hash default.
+    custom_color = models.CharField(max_length=7, blank=True, default="")
+    custom_icon = models.CharField(max_length=8, blank=True, default="")
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,

@@ -74,6 +74,50 @@
                                 </div>
                                 <input type="hidden" id="admin-lifetime-input" name="message_lifetime" value="86400" />
                             </div>
+                            {% if can_customize_room %}
+                            <div class="room-customize-wrap" id="room-customize-wrap" style="display:none;">
+                                <div class="panel-label" style="margin-bottom:8px;">// Room Appearance</div>
+                                <div class="form-field room-customize-row">
+                                    <label for="room-color-input">Color</label>
+                                    <input type="color" id="room-color-input" name="room_color" value="#00f5ff" class="room-color-picker" />
+                                </div>
+                                <div class="form-field">
+                                    <label for="room-icon-input">Icon</label>
+                                    <select id="room-icon-input" name="room_icon" class="room-icon-select">
+                                        <option value="💀">💀</option>
+                                        <option value="🐉">🐉</option>
+                                        <option value="🔥">🔥</option>
+                                        <option value="💣">💣</option>
+                                        <option value="👻">👻</option>
+                                        <option value="🤖">🤖</option>
+                                        <option value="☢️">☢️</option>
+                                        <option value="☣️">☣️</option>
+                                        <option value="🕷️">🕷️</option>
+                                        <option value="🧙">🧙</option>
+                                        <option value="☄️">☄️</option>
+                                        <option value="💩">💩</option>
+                                        <option value="🐸">🐸</option>
+                                        <option value="🦅">🦅</option>
+                                        <option value="🔒">🔒</option>
+                                        <option value="💾">💾</option>
+                                        <option value="🛰️">🛰️</option>
+                                        <option value="🐛">🐛</option>
+                                        <option value="🚽">🚽</option>
+                                        <option value="🦛">🦛</option>
+                                        <option value="🎲">🎲</option>
+                                        <option value="🦦">🦦</option>
+                                        <option value="🐱">🐱</option>
+                                        <option value="🐠">🐠</option>
+                                        <option value="🌶️">🌶️</option>
+                                        <option value="🦀">🦀</option>
+                                        <option value="🐙">🐙</option>
+                                        <option value="🦠">🦠</option>
+                                        <option value="🧨">🧨</option>
+                                        <option value="🪲">🪲</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {% endif %}
                             <button class="btn btn-primary btn-lg btn-full" type="submit">Enter Room &rarr;</button>
                         </form>
                     {% else %}
@@ -99,6 +143,50 @@
                                 </div>
                                 <input type="hidden" id="user-lifetime-input" name="message_lifetime" value="86400" />
                             </div>
+                            {% if can_customize_room %}
+                            <div class="room-customize-wrap" id="room-customize-wrap" style="display:none;">
+                                <div class="panel-label" style="margin-bottom:8px;">// Room Appearance</div>
+                                <div class="form-field room-customize-row">
+                                    <label for="room-color-input">Color</label>
+                                    <input type="color" id="room-color-input" name="room_color" value="#00f5ff" class="room-color-picker" />
+                                </div>
+                                <div class="form-field">
+                                    <label for="room-icon-input">Icon</label>
+                                    <select id="room-icon-input" name="room_icon" class="room-icon-select">
+                                        <option value="💀">💀</option>
+                                        <option value="🐉">🐉</option>
+                                        <option value="🔥">🔥</option>
+                                        <option value="💣">💣</option>
+                                        <option value="👻">👻</option>
+                                        <option value="🤖">🤖</option>
+                                        <option value="☢️">☢️</option>
+                                        <option value="☣️">☣️</option>
+                                        <option value="🕷️">🕷️</option>
+                                        <option value="🧙">🧙</option>
+                                        <option value="☄️">☄️</option>
+                                        <option value="💩">💩</option>
+                                        <option value="🐸">🐸</option>
+                                        <option value="🦅">🦅</option>
+                                        <option value="🔒">🔒</option>
+                                        <option value="💾">💾</option>
+                                        <option value="🛰️">🛰️</option>
+                                        <option value="🐛">🐛</option>
+                                        <option value="🚽">🚽</option>
+                                        <option value="🦛">🦛</option>
+                                        <option value="🎲">🎲</option>
+                                        <option value="🦦">🦦</option>
+                                        <option value="🐱">🐱</option>
+                                        <option value="🐠">🐠</option>
+                                        <option value="🌶️">🌶️</option>
+                                        <option value="🦀">🦀</option>
+                                        <option value="🐙">🐙</option>
+                                        <option value="🦠">🦠</option>
+                                        <option value="🧨">🧨</option>
+                                        <option value="🪲">🪲</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {% endif %}
                             <div id="submit-wrap" style="margin-top:6px; display:none;">
                                 <button class="btn btn-primary btn-lg btn-full" type="submit">Enter Room &rarr;</button>
                             </div>

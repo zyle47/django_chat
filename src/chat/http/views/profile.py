@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 
 from chat.models import UpgradeRequest, UserProfile
 from chat.services.avatar import process_avatar
+from chat.services.tiers import can_animate_avatar
 
 
 @login_required
@@ -31,7 +32,9 @@ def edit_profile(request):
         return JsonResponse({"ok": False, "error": "No file provided."}, status=400)
 
     try:
-        content_file = process_avatar(uploaded)
+        content_file = process_avatar(
+            uploaded, allow_animation=can_animate_avatar(request.user)
+        )
     except ValueError as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=400)
 

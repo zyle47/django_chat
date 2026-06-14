@@ -797,6 +797,51 @@ body {
 @media (max-width: 600px) {
     .stat-cards { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Room customization pickers (color + icon) ── */
+.room-customize-wrap {
+    margin: 10px 0 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(0,245,255,0.03);
+}
+.room-customize-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.room-color-picker {
+    width: 44px;
+    height: 34px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--panel);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.room-color-picker:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 1px rgba(0,245,255,0.2);
+    outline: none;
+}
+.room-icon-select {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 1.05rem;
+    outline: none;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.room-icon-select:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 1px rgba(0,245,255,0.2), 0 0 14px rgba(0,245,255,0.12);
+}
 @media (max-width: 540px) {
     body { padding: 12px 10px; }
     .topbar { padding: 12px 16px; }

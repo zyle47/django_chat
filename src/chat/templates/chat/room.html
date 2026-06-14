@@ -22,7 +22,7 @@
                              data-msg-id="{{ item.id }}"
                              style="--bubble-bg: {{ item.color }};">
                         <div class="msg-meta">
-                            <strong>{{ item.username }}</strong>
+                            <strong class="msg-author tier-{{ item.tier }}">{{ item.username }}</strong>
                             <time class="msg-time" data-ts="{{ item.time|date:'c' }}">{{ item.time|date:"M j, H:i" }}</time>
                             {% if item.expires_at %}<span class="msg-timer" data-expires="{{ item.expires_at|date:'c' }}">--:--:--</span>{% endif %}
                             {% if item.edited_at %}<span class="edited-tag">(edited)</span>{% endif %}
@@ -47,7 +47,7 @@
                              data-img-id="{{ item.id }}"
                              style="--bubble-bg: {{ item.color }};">
                         <div class="msg-meta">
-                            <strong>{{ item.username }}</strong>
+                            <strong class="msg-author tier-{{ item.tier }}">{{ item.username }}</strong>
                             <span class="img-timer" data-expires="{{ item.expires_at|date:'c' }}">60:00</span>
                             {% if item.is_mine %}
                             <div class="msg-actions">

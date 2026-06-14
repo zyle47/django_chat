@@ -144,7 +144,13 @@ SECURE_REFERRER_POLICY = "same-origin"
 CHAT_IMAGE_MAX_BYTES = 5 * 1024 * 1024  # 5 MB raw upload limit
 CHAT_IMAGE_MAX_PIXELS = 40_000_000  # 40 MP — blocks decompression bombs
 CHAT_IMAGE_EXPIRY_SECONDS = 43200  # 12 hours
-CHAT_IMAGE_MAX_PER_USER = 25
+CHAT_IMAGE_MAX_PER_USER = 25  # fallback default when a tier key is missing
+CHAT_IMAGE_MAX_PER_USER_BY_TIER = {
+    "bronze": 5,
+    "silver": 25,
+    "gold": 50,
+    "platinum": 100,
+}
 CHAT_MESSAGE_EXPIRY_SECONDS = 86400  # 24 hours
 
 # ── Avatars & tiers ────────────────────────────────────────────────────────────

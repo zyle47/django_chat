@@ -51,6 +51,11 @@
         }
     }
 
+    const VALID_TIERS = new Set(['bronze', 'silver', 'gold', 'platinum']);
+    function safeTier(t) {
+        return VALID_TIERS.has(t) ? t : 'bronze';
+    }
+
     function escapeText(s) {
         const d = document.createElement('div');
         d.textContent = s;
@@ -98,7 +103,9 @@
             const unreadHtml = (unread === 0)
                 ? ''
                 : `<span class="friend-unread">${escapeText(String(unread))}</span>`;
-            const cardInner = `<div class="name"><span class="name-text">${escapeText(f.username)}</span>${unreadHtml}</div>`;
+            const tierClass = safeTier(f.tier);
+            row.dataset.tier = tierClass;
+            const cardInner = `<div class="name"><span class="name-text tier-${tierClass}">${escapeText(f.username)}</span>${unreadHtml}</div>`;
             const cardHtml = f.banned
                 ? `<div class="friend-row banned-card">${cardInner}</div>`
                 : `<button type="button" class="friend-row" data-action="dm">${cardInner}</button>`;
@@ -413,6 +420,11 @@
         dmPeer = peerUsername;
         peerLastReadAt = null;
         dmLabel.textContent = `// ${peerUsername}`;
+        // Apply tier glow to DM header label
+        const peerRow = friendList.querySelector(`.friend-row-wrap[data-username="${CSS.escape(peerUsername)}"]`);
+        const peerTier = peerRow ? safeTier(peerRow.dataset.tier) : 'bronze';
+        dmLabel.className = dmLabel.className.replace(/\btier-\S+/g, '').trim();
+        dmLabel.classList.add(`tier-${peerTier}`);
         dmLog.innerHTML = '<div class="dm-empty">Loading&hellip;</div>';
         friendsView.hidden = true;
         dmView.hidden = false;

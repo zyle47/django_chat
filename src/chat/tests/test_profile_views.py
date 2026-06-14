@@ -4,6 +4,7 @@ Tests for chat.http.views.profile — uses RequestFactory; no URL reversals.
 
 import io
 import os
+import shutil
 import tempfile
 
 from django.contrib.auth import get_user_model
@@ -62,6 +63,15 @@ class EditProfileViewTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.user = User.objects.create_user(username="tester", password="pass")
+        # Isolate avatar writes to a throwaway MEDIA_ROOT so tests never touch
+        # the real media/ dir (which the live app populates as root).
+        self._tmp_media = tempfile.mkdtemp()
+        self._media_override = override_settings(MEDIA_ROOT=self._tmp_media)
+        self._media_override.enable()
+
+    def tearDown(self):
+        self._media_override.disable()
+        shutil.rmtree(self._tmp_media, ignore_errors=True)
 
     def _post(self, data=None, files=None):
         request = self.factory.post("/profile/edit/", data=data or {})
@@ -171,6 +181,15 @@ class ServeAvatarViewTests(TestCase):
     def setUp(self):
         self.factory = RequestFactory()
         self.user = User.objects.create_user(username="avataruser", password="pass")
+        # Isolate avatar writes to a throwaway MEDIA_ROOT so tests never touch
+        # the real media/ dir (which the live app populates as root).
+        self._tmp_media = tempfile.mkdtemp()
+        self._media_override = override_settings(MEDIA_ROOT=self._tmp_media)
+        self._media_override.enable()
+
+    def tearDown(self):
+        self._media_override.disable()
+        shutil.rmtree(self._tmp_media, ignore_errors=True)
 
     def test_404_when_no_profile_row(self):
         """serve_avatar should 404 when no UserProfile row exists for the user_id."""
@@ -215,8 +234,6 @@ class ServeAvatarViewTests(TestCase):
             # Manually assign the avatar field to point at the tmp file.
             # We use the field's .name attribute; Django's FieldFile reads .path via storage.
             # It's simpler to save via the field API into MEDIA_ROOT and clean up.
-            import shutil
-
             from django.conf import settings as djsettings
 
             media_avatars = os.path.join(djsettings.MEDIA_ROOT, "avatars")

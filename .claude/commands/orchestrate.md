@@ -1,5 +1,6 @@
 ---
 description: Decompose an approved plan into file-scoped tasks and dispatch worker subagents (parallel when disjoint, serial when files overlap), then integrate and verify.
+argument-hint: [run-slug]
 ---
 
 # Orchestrator — django-chat
@@ -31,9 +32,16 @@ feature code yourself except small integration/seam glue.
 ## Workflow
 
 ### Phase 0 — Intake
-Use the **approved plan already in this conversation** as the source of work. If there
-is no plan in context, ask Nemanja for the plan or task list before doing anything
-else. Pick a short run slug and create `.claude/work/<run>/` (this dir is gitignored).
+**If invoked with a run-slug argument** (`$ARGUMENTS`, e.g. `/orchestrate perks`): that
+slug IS the run. Load `.claude/work/$ARGUMENTS/tasks.md` (and `assignments.md` if present)
+and treat it as the approved plan. If Phase 1 artifacts already exist there, skip Phase 1
+and resume from the first non-`done` task in `assignments.md`; otherwise decompose it
+(Phase 1) into that same dir.
+
+Otherwise, use the **approved plan already in this conversation** as the source of work;
+if there is no plan in context, ask Nemanja for the plan or task list before doing
+anything else. Either way, pick/confirm a short run slug and ensure `.claude/work/<run>/`
+exists (this dir is gitignored).
 
 ### Phase 1 — Decompose & map (the important phase)
 1. Break the plan into discrete **tasks**. For each task decide its **`domain`**
